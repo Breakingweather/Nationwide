@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Warnings - Fixed Color + Radar</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+body{background:#000;color:#fff;margin:0;font-family:Arial, sans-serif}
+#searchBox{width:92%;margin:12px 4%;padding:12px;border:2px solid #FFD700;border-radius:12px;background:#111;color:#FFD700}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
+.card{background:#111;border:2px solid #222;border-radius:16px;overflow:hidden}
+.card-header{padding:10px;color:#FFD700;font-weight:bold;font-size:14px}
+.card-map{height:280px;width:100%;background:#222}
+.btn{width:90%;margin:8px 5%;padding:10px;background:#111;border:2px solid #FFD700;color:#FFD700;border-radius:20px;font-weight:bold}
+.enlarge-wrap{position:fixed;top:0;left:0;right:0;bottom:0;background:#000;z-index:9999;display:none;flex-direction:column}
+.enlarge-map{flex:1;width:100%}
+.enlarge-info{padding:12px;background:#111;border-top:2px solid #FFD700}
+</style>
+</head>
+<body>
+
+<input id="searchBox" placeholder="Type Texas, TX, Tornado, Flood...">
+
+<div id="grid" class="grid"></div>
+
+<div id="enlarge" class="enlarge-wrap">
+<div style="padding:8px;text-align:right"><button onclick="closeEnlarge()" style="background:#FFD700;border:none;border-radius:50%;width:32px;height:32px;font-weight:bold">X</button></div>
+<div id="enlargeMap" class="enlarge-map"></div>
+<div id="enlargeInfo" class="enlarge-info"></div>
+</div>
+
+<script>
+// ============================================================
+// 1. YOUR TWO COLORS - WIRED TO EVERY POLYGON
+// First value = border, Second value = fill (same as your toggle dot)
+// Change these hexes to match your warning toggle panel exactly
+// ============================================================
+const WARNING_COLORS = {
+  "Tornado Warning": {color:"#FF0000", fill:"#FF0000"},
+  "Severe Thunderstorm Warning": {color:"#FF8C00", fill:"#FF8C00"},
+  "Flash Flood Warning": {color:"#00FF00", fill:"#00FF00"},
+  "Flash Flood Watch": {color:"#7ED8F7", fill:"#7ED8F7"},
+  "Flood Advisory": {color:"#00FF7F", fill:"#00FF7F"},
+  "Special Weather Statement": {color:"#9B7FD8", fill:"#9B7FD8"}, // Brookville = purple, not red
+  "Marine Weather Statement": {color:"#FFE4B5", fill:"#FFE4B5"},
+  "Severe Thunderstorm Watch": {color:"#DB7093", fill:"#DB7093"},
+  "Tornado Watch": {color:"#FFFF00", fill:"#FFFF00"},
+  "Winter Storm Warning": {color:"#FF69B4", fill:"#FF69B4"},
+  "Heat Advisory": {color:"#FFA500", fill:"#FFA500"},
+  "Dense Fog Advisory": {color:"#708090", fill:"#708090"},
+  "Wind Advisory": {color:"#D2B48C", fill:"#D2B48C"},
+  "default": {color:"#FF0000", fill:"#FF0000"}
+};
+
+function getColors(eventName){
+  const key = Object.keys(WARNING_COLORS).find(k => eventName && eventName.toLowerCase().includes(k.toLowerCase()));
+  return WARNING_COLORS[key] || WARNING_COLORS["default"];
+}
+
+// ============================================================
+// 2. CREATE MAP WITH RAIN - USED FOR SMALL CARD AND ENLARGE
+// ============================================================
+function makeMap(divId, geometry, eventName){
+  const cols = getColors(eventName);
+  const map = L.map(divId, {zoomControl: true, attributionControl: false}).setView([39.8,-98.5],4);
+
+  // Streets base
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom: 19,
+    zIndex: 200
+  }).addTo(map);
+
+  // RAIN - NEXRAD - THIS WAS MISSING
+  const radar = L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q/{z}/{x}/{y}.png?t='+Date.now(),{
+    opacity: 0.85,
+    zIndex: 350,
+    maxZoom: 12
+  }).addTo(map);
+
+  // Polygon - wired to your two colors
+  let polyLayer = null;
+  if(geometry && geometry.coordinates && geometry.coordinates.length > 0){
+    polyLayer = L.geoJSON({type:"Feature", geometry: geometry},{
+      style:{
+        color: cols.color, // border = your toggle color
+        weight: 4,
+        fillColor: cols.fill, // fill = your toggle color
+        fillOpacity: 0.35, // 0.35 so radar shows through, NOT 1.0 (that caused solid orange/pink cards)
+        fill: true
+      }
+    }).addTo(map);
+    map.fitBounds(polyLayer.getBounds().pad(0.2));
+  }
+
+  // Fix blank solid color bug from screenshot 1
+  setTimeout(()=>{ map.invalidateSize(); if(polyLayer) map.fitBounds(polyLayer.getBounds().pad(0.2)); }, 250);
+  return {map, radar, polyLayer};
+}
+
+// ============================================================
+// 3. LOAD NWS WARNINGS
+// ============================================================
+async function load(){
+  const res = await fetch('https://api.weather.gov/alerts/active?status=actual&message_type=alert');
+  const data = await res.json();
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+
+  data.features.forEach((f,i)=>{
+    const event = f.properties.event;
+    const area = f.properties.areaDesc;
+    const id = 'map_'+i;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-header">${event}<br><span style="color:#fff;font-size:12px">${area}</span></div>
+      <div id="${id}" class="card-map"></div>
+      <button class="btn">TAP TO ENLARGE — POLYGON ON RADAR + STREETS + MESSAGE</button>
+      <button class="btn">📦 SHARE WARNING</button>
+    `;
+    grid.appendChild(card);
+
+    // Create small card map with rain + color-wired polygon
+    setTimeout(()=> makeMap(id, f.geometry, event), 100);
+
+    card.querySelector('.btn').onclick = ()=> openEnlarge(f);
+  });
+}
+
+let enlargeMapObj = null;
+function openEnlarge(feature){
+  document.getElementById('enlarge').style.display='flex';
+  document.getElementById('enlargeMap').innerHTML='';
+  document.getElementById('enlargeInfo').innerHTML = `<b style="color:#FFD700">${feature.properties.event} — ${feature.properties.areaDesc} — LIVE RADAR + POLYGON + STREETS</b><br><br>${feature.properties.description || ''}`;
+
+  // Enlarge map also has rain + same two colors
+  setTimeout(()=>{
+    enlargeMapObj = makeMap('enlargeMap', feature.geometry, feature.properties.event);
+  },100);
+}
+function closeEnlarge(){
+  document.getElementById('enlarge').style.display='none';
+  if(enlargeMapObj && enlargeMapObj.map){ enlargeMapObj.map.remove(); }
+}
+
+load();
+</script>
+</body>
+</html>
