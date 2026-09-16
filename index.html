@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breaking Weather — 170 Radars + ALL Warnings</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8107327731283027" crossorigin="anonymous"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;color:#fff;font-family:system-ui;padding:12px;padding-bottom:90px}
+h1{font-size:18px;font-weight:900;background:linear-gradient(90deg,#FFD700,#FFA500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center}
+#search{width:100%;padding:14px;border-radius:16px;border:2px solid #d4af37;background:#111;color:#FFD700;margin:10px 0;position:sticky;top:8px;z-index:30;font-size:16px}
+.tabs{display:flex;gap:8px;margin:10px 0}
+.tab{flex:1;padding:12px;border-radius:999px;border:2px solid #3a3000;background:#111;color:#9a8a4a;font-weight:800;text-align:center;cursor:pointer}
+.tab.active{background:#FFD700;color:#000;border-color:#FFD700}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.card{border:2px solid #3a3000;border-radius:16px;background:#111;padding:10px;min-height:200px}
+.badge{background:#FFD700;color:#000;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800}
+.city{font-weight:800;color:#FFEC8B;font-size:11px;margin-top:4px}
+.radar-img{width:100%;height:170px;object-fit:cover;border-radius:12px;margin-top:6px;background:#000;cursor:pointer}
+.enlarge-btn{color:#FFD700;font-weight:800;cursor:pointer;padding:9px 0;font-size:11px;text-align:center;background:#000;border:1px solid #3a3000;border-radius:8px;margin-top:6px}
+.share-btn{width:100%;padding:9px;border-radius:999px;border:2px solid #d4af37;background:#000;color:#FFD700;font-weight:800;font-size:10px;cursor:pointer;margin-top:6px}
+.ad-inline{grid-column:1/-1;background:#111;border:2px dashed #d4af37;border-radius:12px;padding:8px;text-align:center;min-height:70px}
+.sticky-ad{position:fixed;bottom:0;left:0;right:0;background:#000;border-top:1px solid #FFD700;min-height:70px;text-align:center;z-index:1000;padding:4px}
+.warning-row{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid #222}
+#modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:99999;flex-direction:column;padding:0;overflow:hidden}
+#modal.show{display:flex!important}
+</style>
+</head>
+<body>
+<h1>👑 Breaking Weather — 170 Radars + ALL Warnings</h1>
+<input id="search" placeholder="Search Texas, Missouri, Mossouri, KTLX...">
+<div class="tabs">
+<div class="tab active" id="tab-radars" onclick="showTab('radars')">🛰️ 170 Radars (<span id="radar-count">0</span>)</div>
+<div class="tab" id="tab-warnings" onclick="showTab('warnings')">🚨 ALL Warnings (<span id="warning-count">0</span>)</div>
+</div>
+<div class="grid" id="radar-grid"></div>
+<div id="warnings-panel" style="display:none"></div>
+
+<div id="modal"><div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:20px"><img id="modal-img" style="max-width:95vw;max-height:70vh;border-radius:16px;border:3px solid #FFD700"><div id="modal-title" style="color:#FFD700;font-weight:900;margin-top:10px;text-align:center"></div><button onclick="closeModal()" style="margin-top:12px;background:#FFD700;color:#000;padding:11px 26px;border-radius:999px;font-weight:900">✕ CLOSE</button></div></div>
+
+<div class="sticky-ad"><button onclick="this.parentElement.style.display='none'" style="position:absolute;top:2px;right:8px;background:#FFD700;color:#000;border:none;border-radius:50%;width:20px;height:20px">✕</button><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8107327731283027" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({});</script></div>
+
+<script>
+const SHARE_SITE='https://worldbreakingweather.github.io';
+const RADARS=["KABR","KABX","KAKQ","KAMA","KAMX","KAPX","KARX","KATX","KBBX","KBGM","KBIS","KBLX","KBMX","KBOX","KBRO","KBUF","KBYX","KCAE","KCBW","KCBX","KCCX","KCLE","KCLX","KCRP","KCXX","KCYS","KDAX","KDDC","KDFX","KDGX","KDMX","KDOX","KDTX","KDVN","KDYX","KEAX","KEMX","KENX","KEOX","KEPZ","KESX","KEVX","KEWX","KEYX","KFCX","KFDR","KFDX","KFFC","KFSD","KFSX","KFTG","KFWX","KGGW","KGJX","KGLD","KGRB","KGRK","KGRR","KGWX","KGYX","KHDC","KHDX","KHGX","KHNX","KHPX","KHTX","KICT","KICX","KILN","KILX","KIND","KINX","KIWA","KIWX","KJAN","KJAX","KJGX","KJKL","KLBB","KLCH","KLIX","KLNX","KLOT","KLRX","KLSX","KLTX","KLVX","KLWX","KLZK","KMAF","KMAX","KMBX","KMHX","KMKX","KMLB","KMLX","KMMX","KMPX","KMQT","KMRX","KMSX","KMTX","KMUX","KMVX","KMXX","KNKX","KNQA","KOAX","KOHX","KOKX","KOTX","KPAH","KPBZ","KPDT","KPOE","KPUX","KRAX","KRGX","KRIW","KRLX","KRTX","KSFX","KSJT","KSOX","KSRX","KTBW","KTFX","KTWX","KTYX","KUDX","KUEX","KVAX","KVBX","KVNX","KVTX","KVWX","KYUX","PABC","PAHG","PAIH","PAKC","PAPD","PHKI","PHKM","PHMO","PHWA","PGUA","TJUA","KFWS","KTLX"];
+const RADAR_STATES={"KABR":"South Dakota SD Aberdeen SD","KABX":"New Mexico NM Albuquerque NM","KAKQ":"Virginia VA Norfolk VA","KAMA":"Texas TX Amarillo TX","KAMX":"Florida FL Miami FL","KAPX":"Michigan MI Gaylord MI","KARX":"Wisconsin WI La Crosse WI","KATX":"Washington WA Seattle WA","KBBX":"California CA Beale CA","KBGM":"New York NY Binghamton NY","KBIS":"North Dakota ND Bismarck ND","KBLX":"Montana MT Billings MT","KBMX":"Alabama AL Birmingham AL","KBOX":"Massachusetts MA Boston MA","KBRO":"Texas TX Brownsville TX","KBUF":"New York NY Buffalo NY","KBYX":"Florida FL Key West FL","KCAE":"South Carolina SC Columbia SC","KCBW":"Maine ME Caribou ME","KCBX":"Idaho ID Boise ID","KCCX":"Pennsylvania PA State College PA","KCLE":"Ohio OH Cleveland OH","KCLX":"South Carolina SC Charleston SC","KCRP":"Texas TX Corpus Christi TX","KCXX":"Vermont VT Burlington VT","KCYS":"Wyoming WY Cheyenne WY","KDAX":"California CA Sacramento CA","KDDC":"Kansas KS Dodge City KS","KDFX":"Texas TX Del Rio TX","KDGX":"Mississippi MS Jackson MS","KDMX":"Iowa IA Des Moines IA","KDOX":"Delaware DE Dover DE","KDTX":"Michigan MI Detroit MI","KDVN":"Iowa IA Davenport IA","KDYX":"Texas TX Dyess TX","KEAX":"Missouri MO Kansas City MO","KEMX":"Arizona AZ Tucson AZ","KENX":"New York NY Albany NY","KEOX":"Alabama AL Fort Rucker AL","KEPZ":"Texas TX El Paso TX","KESX":"Wisconsin WI La Crosse WI","KEVX":"Florida FL Eglin FL","KEWX":"Texas TX San Antonio TX","KEYX":"California CA Edwards CA","KFCX":"Virginia VA Roanoke VA","KFDR":"Oklahoma OK Frederick OK","KFDX":"New Mexico NM Albuquerque NM","KFFC":"Georgia GA Atlanta GA","KFSD":"South Dakota SD Sioux Falls SD","KFSX":"Arizona AZ Flagstaff AZ","KFTG":"Colorado CO Denver CO","KFWX":"California CA Los Angeles CA","KGGW":"Montana MT Glasgow MT","KGJX":"Colorado CO Grand Junction CO","KGLD":"Kansas KS Goodland KS","KGRB":"Wisconsin WI Green Bay WI","KGRK":"Texas TX Fort Hood TX","KGRR":"Michigan MI Grand Rapids MI","KGWX":"Mississippi MS Columbus MS","KGYX":"Maine ME Portland ME","KHDC":"Louisiana LA Hammond LA","KHDX":"New Mexico NM Holloman NM","KHGX":"Texas TX Houston TX Galveston TX","KHNX":"California CA Hanford CA","KHPX":"Kentucky KY Fort Campbell KY","KHTX":"Alabama AL Huntsville AL","KICT":"Kansas KS Wichita KS","KICX":"Utah UT Cedar City UT","KILN":"Ohio OH Wilmington OH","KILX":"Illinois IL Lincoln IL","KIND":"Indiana IN Indianapolis IN","KINX":"Oklahoma OK Tulsa OK","KIWA":"Arizona AZ Phoenix AZ","KIWX":"Indiana IN Fort Wayne IN","KJAN":"Mississippi MS Jackson MS","KJAX":"Florida FL Jacksonville FL","KJGX":"Georgia GA Warner Robins GA","KJKL":"Kentucky KY Jackson KY","KLBB":"Texas TX Lubbock TX","KLCH":"Louisiana LA Lake Charles LA","KLIX":"Louisiana LA New Orleans LA","KLNX":"Nebraska NE North Platte NE","KLOT":"Illinois IL Chicago IL","KLRX":"Nevada NV Elko NV","KLSX":"Missouri MO St Louis MO","KLTX":"North Carolina NC Wilmington NC","KLVX":"Kentucky KY Louisville KY","KLWX":"Virginia VA Washington DC Sterling VA","KLZK":"Arkansas AR Little Rock AR","KMAF":"Texas TX Midland TX","KMAX":"Minnesota MN Medford OR","KMBX":"North Dakota ND Minot ND","KMHX":"North Carolina NC Morehead City NC","KMKX":"Wisconsin WI Milwaukee WI","KMLB":"Florida FL Melbourne FL","KMLX":"California CA San Francisco CA","KMMX":"Minnesota MN Minneapolis MN","KMPX":"Minnesota MN Minneapolis MN","KMQT":"Michigan MI Marquette MI","KMRX":"Tennessee TN Morristown TN","KMSX":"Montana MT Missoula MT","KMTX":"Montana MT Great Falls MT","KMUX":"California CA San Francisco CA","KMVX":"North Dakota ND Grand Forks ND","KMXX":"Alabama AL Montgomery AL","KNKX":"California CA San Diego CA","KNQA":"Tennessee TN Memphis TN","KOAX":"Nebraska NE Omaha NE","KOHX":"Tennessee TN Nashville TN","KOKX":"New York NY New York City NY","KOTX":"Washington WA Spokane WA","KPAH":"Kentucky KY Paducah KY","KPBZ":"Pennsylvania PA Pittsburgh PA","KPDT":"Oregon OR Pendleton OR","KPOE":"Louisiana LA Fort Polk LA","KPUX":"Colorado CO Pueblo CO","KRAX":"North Carolina NC Raleigh NC","KRGX":"Nevada NV Reno NV","KRIW":"Wyoming WY Riverton WY","KRLX":"West Virginia WV Charleston WV","KRTX":"Oregon OR Portland OR","KSFX":"Idaho ID Pocatello ID","KSJT":"Texas TX San Angelo TX","KSOX":"California CA Orange County CA","KSRX":"Arkansas AR Fort Smith AR","KTBW":"Florida FL Tampa FL","KTFX":"Montana MT Great Falls MT","KTWX":"Kansas KS Topeka KS","KTYX":"New York NY Watertown NY","KUDX":"South Dakota SD Rapid City SD","KUEX":"Nebraska NE Grand Island NE","KVAX":"Georgia GA Valdosta GA","KVBX":"California CA Vandenberg CA","KVNX":"Oklahoma OK Enid OK","KVTX":"California CA Los Angeles CA","KVWX":"Indiana IN Evansville IN","KYUX":"Arizona AZ Yuma AZ","PABC":"Alaska AK Bethel AK","PAHG":"Alaska AK Kenai AK","PAIH":"Alaska AK Middleton AK","PAKC":"Alaska AK Anchorage AK","PAPD":"Alaska AK Fairbanks AK","PHKI":"Hawaii HI Kauai HI","PHKM":"Hawaii HI Kamuela HI","PHMO":"Hawaii HI Molokai HI","PHWA":"Hawaii HI South Shore HI","PGUA":"Guam GU Andersen AFB GU","TJUA":"Puerto Rico PR San Juan PR","KFWS":"Texas TX Fort Worth TX","KTLX":"Oklahoma OK Oklahoma City OK"};
+
+function buildRadarGrid(){
+const grid=document.getElementById('radar-grid');grid.innerHTML='';
+[...new Set(RADARS)].forEach((id,i)=>{
+if(i>0&&i%4===0){const ad=document.createElement('div');ad.className='ad-inline';ad.innerHTML='<div style="color:#d4af37;font-size:10px">Advertisement — Money every 4 cards</div><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8107327731283027" data-ad-format="auto" data-full-width-responsive="true"></ins>';grid.appendChild(ad);try{(adsbygoogle=window.adsbygoogle||[]).push({});}catch(e){}}
+const s=RADAR_STATES[id]||id;const t=(id+' '+s).toLowerCase();
+const card=document.createElement('div');card.className='card';card.setAttribute('data-search',t);
+card.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:4px"><strong>${id}</strong><span class="badge">${id.substring(0,2)}</span></div><div class="city">${s}</div><img class="radar-img" loading="lazy" src="https://radar.weather.gov/ridge/standard/${id}_loop.gif"><div class="enlarge-btn" onclick="openModalForId('${id}')">TAP TO ENLARGE — FULL RADAR</div><button class="share-btn" onclick="shareToFacebook('${id}')">📤 SHARE ${id}</button>`;
+const img=card.querySelector('.radar-img');img.addEventListener('click',()=>openModalForId(id));img.addEventListener('error',()=>{card.style.display='none';updateRadarCount();});img.addEventListener('load',()=>{updateRadarCount();});
+grid.appendChild(card);
+});
+updateRadarCount();
+fetchWarnings();
+}
+
+function updateRadarCount(){
+const cards=document.querySelectorAll('#radar-grid.card');
+let visible=0;cards.forEach(c=>{if(c.style.display!=='none') visible++;});
+document.getElementById('radar-count').innerText=visible;
+}
+
+async function fetchWarnings(){
+try{
+const res=await fetch('https://api.weather.gov/alerts/active');
+const data=await res.json();
+const count=data.features? data.features.length : 0;
+document.getElementById('warning-count').innerText=count;
+const panel=document.getElementById('warnings-panel');
+if(count===0){panel.innerHTML='<div style="padding:20px;text-align:center;color:#9a8a4a">No active NWS warnings right now — check toggles in your screenshot still on.</div>'; return;}
+let html='<div style="padding:10px">';
+data.features.slice(0,100).forEach(f=>{
+const p=f.properties;
+html+=`<div class="card" style="margin-bottom:10px"><strong style="color:#FFD700">${p.event}</strong><div class="city">${p.areaDesc}</div><div style="font-size:11px;margin-top:6px;color:#ccc">${p.headline}</div></div>`;
+});
+html+='</div>'; panel.innerHTML=html;
+}catch(e){document.getElementById('warning-count').innerText='—';}
+}
+
+function showTab(which){
+document.getElementById('tab-radars').classList.toggle('active',which==='radars');
+document.getElementById('tab-warnings').classList.toggle('active',which==='warnings');
+document.getElementById('radar-grid').style.display=which==='radars'?'grid':'none';
+document.getElementById('warnings-panel').style.display=which==='warnings'?'block':'none';
+document.getElementById('search').style.display=which==='radars'?'block':'none';
+}
+
+function shareToFacebook(id){
+const specificUrl=SHARE_SITE+'?radar='+id;
+window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(specificUrl),'_blank');
+}
+function openModalForId(id){document.getElementById('modal-img').src='https://radar.weather.gov/ridge/standard/'+id+'_loop.gif';document.getElementById('modal-title').innerText=id+' — '+(RADAR_STATES[id]||id);document.getElementById('modal').classList.add('show');}
+function closeModal(){document.getElementById('modal').classList.remove('show');}
+
+const inp=document.getElementById('search');
+inp.addEventListener('input',()=>{
+const q=inp.value.toLowerCase().trim();
+const cards=document.querySelectorAll('#radar-grid.card');
+let visible=0;
+cards.forEach(c=>{
+const s=(c.getAttribute('data-search')||'').toLowerCase();
+const show=q===''||s.includes(q);
+c.style.display=show?'':'none';
+if(show) visible++;
+});
+document.getElementById('radar-count').innerText=visible;
+document.querySelectorAll('#radar-grid.ad-inline').forEach(ad=>{ad.style.display=q===''?'':'none';});
+});
+
+window.addEventListener('DOMContentLoaded',buildRadarGrid);
+</script>
+</body>
+</html>
