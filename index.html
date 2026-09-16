@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Breaking Weather — 170 Radars + Hide Toggles</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8107327731283027" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;color:#fff;font-family:system-ui;padding:12px;padding-bottom:90px}h1{font-size:20px;font-weight:900;background:linear-gradient(90deg,#FFD700,#FFA500);-webkit-background-clip:text;-webkit-text-fill-color:transparent}#search{width:100%;padding:14px;border-radius:16px;border:2px solid #d4af37;background:#111;color:#FFD700;margin:10px 0;position:sticky;top:8px;z-index:30;font-size:16px}.tabs{display:flex;gap:8px;margin:10px 0;position:sticky;top:62px;background:#000;padding:8px 0;z-index:20}.tab-btn{padding:12px 18px;border-radius:999px;border:2px solid #3a3000;background:#111;color:#d4af37;font-weight:900;cursor:pointer}.tab-btn.active{background:#FFD700;color:#000;border-color:#FFD700}.tab-content{display:none}.tab-content.active{display:block}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}}.card{border:2px solid #3a3000;border-radius:16px;background:#111;padding:10px;min-height:300px}.card-top{display:flex;justify-content:space-between;margin-bottom:4px}.badge{background:#FFD700;color:#000;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800}.city{font-weight:800;color:#FFEC8B;font-size:12px}.radar-img{width:100%;height:170px;object-fit:cover;border-radius:12px;margin-top:6px;background:#000;cursor:pointer}.enlarge-btn{color:#FFD700;font-weight:800;cursor:pointer;padding:9px 0;font-size:11px;text-align:center;background:#000;border:1px solid #3a3000;border-radius:8px;margin-top:6px}.share-btn{width:100%;padding:9px;border-radius:999px;border:2px solid #d4af37;background:#000;color:#FFD700;font-weight:800;font-size:10px;cursor:pointer;margin-top:6px}.sticky-ad{position:fixed;bottom:0;left:0;right:0;background:#000;border-top:1px solid #FFD700;min-height:90px;text-align:center;z-index:1000;padding:4px}.severe-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}@media(max-width:800px){.severe-grid{grid-template-columns:1fr}}.severe-radar-map{width:100%;height:300px;border-radius:12px;margin-top:8px;border:2px solid #333;background:#000}
+#modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:99999;flex-direction:column;padding:0;overflow:hidden}
+#modal.show{display:flex!important}
+.modal-ad{width:100%;height:80px;min-height:80px;background:#111;border-top:1px solid #d4af37;border-bottom:1px solid #d4af37;text-align:center;padding:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.modal-center{flex:1;display:flex;flex-direction:column;align-items:center;width:100%;padding:10px;overflow:auto;background:#000}
+#modal-img{max-width:95vw;max-height:65vh;width:auto;height:auto;border-radius:16px;border:3px solid #FFD700;object-fit:contain;display:block;margin:0 auto}
+#modal-title{color:#FFD700;font-weight:900;margin-top:10px;text-align:center;font-size:12px;max-width:95vw}
+#modal-severe-box{max-width:98vw;width:98vw;max-height:92vh;overflow:auto;background:#000;border:3px solid #FFD700;border-radius:16px;padding:0px;display:none;font-size:13px;line-height:1.6}
+#modal-severe-map{width:100%;height:400px;border-radius:12px;border:2px solid #FF0000;margin-bottom:8px;background:#000;display:block}
+.full-message-box{background:#111;border:2px solid #FFD700;border-radius:12px;padding:12px;margin-top:8px;white-space:pre-wrap;font-size:13px;line-height:1.6;color:#fff}
+.settings-panel{background:#111;border:2px solid #3a3000;border-radius:16px;padding:12px;margin:10px 0;transition:all 0.3s ease}
+.settings-panel.hidden{display:none}
+.settings-group-title{color:#FFD700;font-weight:900;font-size:14px;margin:16px 0 8px 0}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #222}
+.settings-left{display:flex;align-items:center;gap:8px;font-size:13px}
+.color-dot{width:16px;height:16px;border-radius:4px;flex-shrink:0}
+.toggle{width:52px;height:28px;background:#555;border-radius:999px;position:relative;cursor:pointer;transition:0.2s;flex-shrink:0}
+.toggle.on{background:#1a73e8}
+.toggle-knob{width:24px;height:24px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:0.2s}
+.toggle.on.toggle-knob{left:26px}
+.ad-inline{grid-column:1/-1;background:#111;border:2px dashed #d4af37;border-radius:12px;padding:8px;text-align:center;min-height:100px}
+.hide-btn{background:#222;color:#FFD700;border:2px solid #d4af37;padding:11px 18px;border-radius:999px;font-weight:900;font-size:12px;cursor:pointer}
+</style>
+</head>
+<body>
+<h1>👑 World Breaking Weather — 170 Radars + ALL Warnings</h1>
+<input id="search" placeholder="Search Texas, Missouri, Mossouri, Small Craft, MPD...">
+<div class="tabs"><button class="tab-btn active" onclick="switchTab('radar')">🛰️ 170 Radars (<span id="radar-count">0</span>)</button><button class="tab-btn" onclick="switchTab('severe')">🚨 ALL Warnings (<span id="severe-count">0</span>)</button></div>
+<div id="tab-radar" class="tab-content active"><div class="grid" id="radar-grid"></div></div>
+<div id="tab-severe" class="tab-content">
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+<button onclick="turnAllOn()" style="background:#1a73e8;color:#fff;padding:11px 18px;border-radius:999px;font-weight:900;font-size:12px">🔵 TURN ALL ON</button>
+<button onclick="turnAllOff()" style="background:#555;color:#fff;padding:11px 18px;border-radius:999px;font-weight:900;font-size:12px">⚫ TURN ALL OFF</button>
+<button onclick="toggleSettings()" id="hideToggleBtn" class="hide-btn">🙈 HIDE TOGGLES</button>
+<button onclick="loadSevereWarnings()" style="background:#FF0000;color:#fff;padding:11px 20px;border-radius:999px;font-weight:900;font-size:12px">🔄 REFRESH ALL</button>
+</div>
+<div id="severe-last-updated" style="color:#9a8a4a;font-size:11px;margin-bottom:6px"></div>
+<div class="settings-panel" id="settings-panel"></div>
+<div id="severe-warnings-container" class="severe-grid" style="margin-top:10px"></div>
+</div>
+<div id="modal"><div class="modal-ad"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8107327731283027" data-ad-format="auto" data-full-width-responsive="true"></ins></div><div class="modal-center"><img id="modal-img" src="" style="display:none"><div id="modal-severe-box"></div><div id="modal-title"></div><button onclick="closeModal()" style="margin-top:12px;background:#FFD700;color:#000;padding:11px 26px;border-radius:999px;font-weight:900">✕ CLOSE</button></div><div class="modal-ad"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8107327731283027" data-ad-format="auto" data-full-width-responsive="true"></ins></div></div>
+<div class="sticky-ad"><button onclick="this.parentElement.style.display='none'" style="position:absolute;top:2px;right:8px;background:#FFD700;color:#000;border:none;border-radius:50%;width:20px;height:20px">✕</button><div style="font-size:10px;color:#d4af37">Advertisement — Money every 4 cards — Sit 30 min</div><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8107327731283027" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({});</script></div>
+<script>
+const SHARE_SITE='https://tinyurl.com/WorldBreakingWeather';
+const RADARS=["KABR","KABX","KAKQ","KAMA","KAMX","KAPX","KARX","KATX","KBBX","KBGM","KBIS","KBLX","KBMX","KBOX","KBRO","KBUF","KBYX","KCAE","KCBW","KCBX","KCCX","KCLE","KCLX","KCRP","KCXX","KCYS","KDAX","KDDC","KDFX","KDGX","KDMX","KDOX","KDTX","KDVN","KDYX","KEAX","KEMX","KENX","KEOX","KEPZ","KESX","KEVX","KEWX","KEYX","KFCX","KFDR","KFDX","KFFC","KFSD","KFSX","KFTG","KFWX","KGGW","KGJX","KGLD","KGRB","KGRK","KGRR","KGWX","KGYX","KHDC","KHDX","KHGX","KHNX","KHPX","KHTX","KICT","KICX","KILN","KILX","KIND","KINX","KIWA","KIWX","KJAN","KJAX","KJGX","KJKL","KLBB","KLCH","KLIX","KLNX","KLOT","KLRX","KLSX","KLTX","KLVX","KLWX","KLZK","KMAF","KMAX","KMBX","KMHX","KMKX","KMLB","KMLX","KMMX","KMPX","KMQT","KMRX","KMSX","KMTX","KMUX","KMVX","KMXX","KNKX","KNQA","KOAX","KOHX","KOKX","KOTX","KPAH","KPBZ","KPDT","KPOE","KPUX","KRAX","KRGX","KRIW","KRLX","KRTX","KSFX","KSJT","KSOX","KSRX","KTBW","KTFX","KTWX","KTYX","KUDX","KUEX","KVAX","KVBX","KVNX","KVTX","KVWX","KYUX","PABC","PAHG","PAIH","PAKC","PAPD","PHKI","PHKM","PHMO","PHWA","PGUA","TJUA","KFWS","KTLX"];
+const RADAR_STATES={"KABR":"South Dakota SD Aberdeen SD","KABX":"New Mexico NM Albuquerque NM","KAKQ":"Virginia VA Norfolk VA","KAMA":"Texas TX Amarillo TX","KAMX":"Florida FL Miami FL","KAPX":"Michigan MI Gaylord MI","KARX":"Wisconsin WI La Crosse WI","KATX":"Washington WA Seattle WA","KBBX":"California CA Beale CA","KBGM":"New York NY Binghamton NY","KBIS":"North Dakota ND Bismarck ND","KBLX":"Montana MT Billings MT","KBMX":"Alabama AL Birmingham AL","KBOX":"Massachusetts MA Boston MA","KBRO":"Texas TX Brownsville TX","KBUF":"New York NY Buffalo NY","KBYX":"Florida FL Key West FL","KCAE":"South Carolina SC Columbia SC","KCBW":"Maine ME Caribou ME","KCBX":"Idaho ID Boise ID","KCCX":"Pennsylvania PA State College PA","KCLE":"Ohio OH Cleveland OH","KCLX":"South Carolina SC Charleston SC","KCRP":"Texas TX Corpus Christi TX","KCXX":"Vermont VT Burlington VT","KCYS":"Wyoming WY Cheyenne WY","KDAX":"California CA Sacramento CA","KDDC":"Kansas KS Dodge City KS","KDFX":"Texas TX Del Rio TX","KDGX":"Mississippi MS Jackson MS","KDMX":"Iowa IA Des Moines IA","KDOX":"Delaware DE Dover DE","KDTX":"Michigan MI Detroit MI","KDVN":"Iowa IA Davenport IA","KDYX":"Texas TX Dyess TX","KEAX":"Missouri MO Kansas City MO","KEMX":"Arizona AZ Tucson AZ","KENX":"New York NY Albany NY","KEOX":"Alabama AL Fort Rucker AL","KEPZ":"Texas TX El Paso TX","KESX":"Wisconsin WI La Crosse WI","KEVX":"Florida FL Eglin FL","KEWX":"Texas TX San Antonio TX","KEYX":"California CA Edwards CA","KFCX":"Virginia VA Roanoke VA","KFDR":"Oklahoma OK Frederick OK","KFDX":"New Mexico NM Albuquerque NM","KFFC":"Georgia GA Atlanta GA","KFSD":"South Dakota SD Sioux Falls SD","KFSX":"Arizona AZ Flagstaff AZ","KFTG":"Colorado CO Denver CO","KFWX":"California CA Los Angeles CA","KGGW":"Montana MT Glasgow MT","KGJX":"Colorado CO Grand Junction CO","KGLD":"Kansas KS Goodland KS","KGRB":"Wisconsin WI Green Bay WI","KGRK":"Texas TX Fort Hood TX","KGRR":"Michigan MI Grand Rapids MI","KGWX":"Mississippi MS Columbus MS","KGYX":"Maine ME Portland ME","KHDC":"Louisiana LA Hammond LA","KHDX":"New Mexico NM Holloman NM","KHGX":"Texas TX Houston TX Galveston TX","KHNX":"California CA Hanford CA","KHPX":"Kentucky KY Fort Campbell KY","KHTX":"Alabama AL Huntsville AL","KICT":"Kansas KS Wichita KS","KICX":"Utah UT Cedar City UT","KILN":"Ohio OH Wilmington OH","KILX":"Illinois IL Lincoln IL","KIND":"Indiana IN Indianapolis IN","KINX":"Oklahoma OK Tulsa OK","KIWA":"Arizona AZ Phoenix AZ","KIWX":"Indiana IN Fort Wayne IN","KJAN":"Mississippi MS Jackson MS","KJAX":"Florida FL Jacksonville FL","KJGX":"Georgia GA Warner Robins GA","KJKL":"Kentucky KY Jackson KY","KLBB":"Texas TX Lubbock TX","KLCH":"Louisiana LA Lake Charles LA","KLIX":"Louisiana LA New Orleans LA","KLNX":"Nebraska NE North Platte NE","KLOT":"Illinois IL Chicago IL","KLRX":"Nevada NV Elko NV","KLSX":"Missouri MO St Louis MO","KLTX":"North Carolina NC Wilmington NC","KLVX":"Kentucky KY Louisville KY","KLWX":"Virginia VA Washington DC Sterling VA","KLZK":"Arkansas AR Little Rock AR","KMAF":"Texas TX Midland TX","KMAX":"Minnesota MN Medford OR","KMBX":"North Dakota ND Minot ND","KMHX":"North Carolina NC Morehead City NC","KMKX":"Wisconsin WI Milwaukee WI","KMLB":"Florida FL Melbourne FL","KMLX":"California CA San Francisco CA","KMMX":"Minnesota MN Minneapolis MN","KMPX":"Minnesota MN Minneapolis MN","KMQT":"Michigan MI Marquette MI","KMRX":"Tennessee TN Morristown TN","KMSX":"Montana MT Missoula MT","KMTX":"Montana MT Great Falls MT","KMUX":"California CA San Francisco CA","KMVX":"North Dakota ND Grand Forks ND","KMXX":"Alabama AL Montgomery AL","KNKX":"California CA San Diego CA","KNQA":"Tennessee TN Memphis TN","KOAX":"Nebraska NE Omaha NE","KOHX":"Tennessee TN Nashville TN","KOKX":"New York NY New York City NY","KOTX":"Washington WA Spokane WA","KPAH":"Kentucky KY Paducah KY","KPBZ":"Pennsylvania PA Pittsburgh PA","KPDT":"Oregon OR Pendleton OR","KPOE":"Louisiana LA Fort Polk LA","KPUX":"Colorado CO Pueblo CO","KRAX":"North Carolina NC Raleigh NC","KRGX":"Nevada NV Reno NV","KRIW":"Wyoming WY Riverton WY","KRLX":"West Virginia WV Charleston WV","KRTX":"Oregon OR Portland OR","KSFX":"Idaho ID Pocatello ID","KSJT":"Texas TX San Angelo TX","KSOX":"California CA Orange County CA","KSRX":"Arkansas AR Fort Smith AR","KTBW":"Florida FL Tampa FL","KTFX":"Montana MT Great Falls MT","KTWX":"Kansas KS Topeka KS","KTYX":"New York NY Watertown NY","KUDX":"South Dakota SD Rapid City SD","KUEX":"Nebraska NE Grand Island NE","KVAX":"Georgia GA Valdosta GA","KVBX":"California CA Vandenberg CA","KVNX":"Oklahoma OK Enid OK","KVTX":"California CA Los Angeles CA","KVWX":"Indiana IN Evansville IN","KYUX":"Arizona AZ Yuma AZ","PABC":"Alaska AK Bethel AK","PAHG":"Alaska AK Kenai AK","PAIH":"Alaska AK Middleton AK","PAKC":"Alaska AK Anchorage AK","PAPD":"Alaska AK Fairbanks AK","PHKI":"Hawaii HI Kauai HI","PHKM":"Hawaii HI Kamuela HI","PHMO":"Hawaii HI Molokai HI","PHWA":"Hawaii HI South Shore HI","PGUA":"Guam GU Andersen AFB GU","TJUA":"Puerto Rico PR San Juan PR","KFWS":"Texas TX Fort Worth TX","KTLX":"Oklahoma OK Oklahoma City OK"};
+const ALL_ALERT_TYPES=[
+{category:'Severe - Warnings',label:'Tornado Warning',color:'#FF0000',event:'Tornado Warning'},
+{category:'Severe - Warnings',label:'Severe Thunderstorm Warning',color:'#FF8C00',event:'Severe Thunderstorm Warning'},
+{category:'Severe - Warnings',label:'Flash Flood Warning',color:'#00FF00',event:'Flash Flood Warning'},
+{category:'Severe - Warnings',label:'Special Marine Warning',color:'#4B004B',event:'Special Marine Warning'},
+{category:'Severe - Watches',label:'Tornado Watch',color:'#FF0000',event:'Tornado Watch'},
+{category:'Severe - Watches',label:'Severe Thunderstorm Watch',color:'#FFC000',event:'Severe Thunderstorm Watch'},
+{category:'Severe - Watches',label:'Flash Flood Watch',color:'#7ED8F7',event:'Flash Flood Watch'},
+{category:'Severe - Statements',label:'Special Weather Statement',color:'#9B7FD8',event:'Special Weather Statement'},
+{category:'Severe - Statements',label:'Marine Weather Statement',color:'#FFE4B5',event:'Marine Weather Statement'},
+{category:'Winter - Warnings',label:'Blizzard Warning',color:'#FF4500',event:'Blizzard Warning'},
+{category:'Winter - Warnings',label:'Snow Squall Warning',color:'#C71585',event:'Snow Squall Warning'},
+{category:'Winter - Warnings',label:'Ice Storm Warning',color:'#8B008B',event:'Ice Storm Warning'},
+{category:'Winter - Warnings',label:'Winter Storm Warning',color:'#FF69B4',event:'Winter Storm Warning'},
+{category:'Winter - Warnings',label:'Lake Effect Snow Warning',color:'#1E90FF',event:'Lake Effect Snow Warning'},
+{category:'Winter - Warnings',label:'Avalanche Warning',color:'#4682B4',event:'Avalanche Warning'},
+{category:'Winter - Warnings',label:'Extreme Cold Warning',color:'#0000CD',event:'Extreme Cold Warning'},
+{category:'Winter - Warnings',label:'Freeze Warning',color:'#00008B',event:'Freeze Warning'},
+{category:'Winter - Watches',label:'Winter Storm Watch',color:'#4682B4',event:'Winter Storm Watch'},
+{category:'Winter - Watches',label:'Avalanche Watch',color:'#A0522D',event:'Avalanche Watch'},
+{category:'Winter - Watches',label:'Extreme Cold Watch',color:'#000080',event:'Extreme Cold Watch'},
+{category:'Winter - Watches',label:'Freeze Watch',color:'#483D8B',event:'Freeze Watch'},
+{category:'Winter - Advisories',label:'Winter Weather Advisory',color:'#7B68EE',event:'Winter Weather Advisory'},
+{category:'Winter - Advisories',label:'Cold Weather Advisory',color:'#87CEFA',event:'Cold Weather Advisory'},
+{category:'Winter - Advisories',label:'Frost Advisory',color:'#6495ED',event:'Frost Advisory'},
+{category:'Hydro - Warnings',label:'Flood Warning',color:'#00FF00',event:'Flood Warning'},
+{category:'Hydro - Warnings',label:'Coastal Flood Warning',color:'#00FF7F',event:'Coastal Flood Warning'},
+{category:'Hydro - Warnings',label:'Lakeshore Flood Warning',color:'#20B2AA',event:'Lakeshore Flood Warning'},
+{category:'Hydro - Warnings',label:'High Surf Warning',color:'#228B22',event:'High Surf Warning'},
+{category:'Hydro - Warnings',label:'Tsunami Warning',color:'#FD6347',event:'Tsunami Warning'},
+{category:'Hydro - Watches',label:'Flood Watch',color:'#2E8B57',event:'Flood Watch'},
+{category:'Hydro - Watches',label:'Tsunami Watch',color:'#FF00FF',event:'Tsunami Watch'},
+{category:'Hydro - Watches',label:'Coastal Flood Watch',color:'#5F9EA0',event:'Coastal Flood Watch'},
+{category:'Hydro - Advisories',label:'Flood Advisory',color:'#00FF7F',event:'Flood Advisory'},
+{category:'Hydro - Advisories',label:'High Surf Advisory',color:'#BA55D3',event:'High Surf Advisory'},
+{category:'Hydro - Advisories',label:'Coastal Flood Advisory',color:'#B0E0E6',event:'Coastal Flood Advisory'},
+{category:'Hydro - Statements',label:'Rip Current Statement',color:'#40E0D0',event:'Rip Current Statement'},
+{category:'Hydro - Statements',label:'Beach Hazards Statement',color:'#40E0D0',event:'Beach Hazards Statement'},
+{category:'Hydro - Outlooks',label:'Hydrologic Outlook',color:'#90EE90',event:'Hydrologic Outlook'},
+{category:'Wind/Air - Warnings',label:'Extreme Wind Warning',color:'#FF8C00',event:'Extreme Wind Warning'},
+{category:'Wind/Air - Warnings',label:'High Wind Warning',color:'#DAA520',event:'High Wind Warning'},
+{category:'Wind/Air - Warnings',label:'Dust Storm Warning',color:'#FF8C00',event:'Dust Storm Warning'},
+{category:'Wind/Air - Advisories',label:'Wind Advisory',color:'#D2B48C',event:'Wind Advisory'},
+{category:'Wind/Air - Advisories',label:'Dense Fog Advisory',color:'#708090',event:'Dense Fog Advisory'},
+{category:'Fire/Heat - Warnings',label:'Red Flag Warning',color:'#FF1493',event:'Red Flag Warning'},
+{category:'Fire/Heat - Warnings',label:'Fire Warning',color:'#8B4513',event:'Fire Warning'},
+{category:'Fire/Heat - Warnings',label:'Extreme Heat Warning',color:'#C71585',event:'Extreme Heat Warning'},
+{category:'Fire/Heat - Watches',label:'Fire Weather Watch',color:'#FFE4B5',event:'Fire Weather Watch'},
+{category:'Fire/Heat - Advisories',label:'Heat Advisory',color:'#FFA07A',event:'Heat Advisory'},
+{category:'Tropical - Warnings',label:'Hurricane Warning',color:'#DC143C',event:'Hurricane Warning'},
+{category:'Tropical - Warnings',label:'Tropical Storm Warning',color:'#8B0000',event:'Tropical Storm Warning'},
+{category:'Tropical - Warnings',label:'Storm Surge Warning',color:'#8A2BE2',event:'Storm Surge Warning'},
+{category:'Tropical - Warnings',label:'Typhoon Warning',color:'#DC143C',event:'Typhoon Warning'},
+{category:'Tropical - Watches',label:'Hurricane Watch',color:'#FF00FF',event:'Hurricane Watch'},
+{category:'Tropical - Watches',label:'Tropical Storm Watch',color:'#F08080',event:'Tropical Storm Watch'},
+{category:'Tropical - Watches',label:'Storm Surge Watch',color:'#DDA0DD',event:'Storm Surge Watch'},
+{category:'Tropical - Watches',label:'Typhoon Watch',color:'#FF00FF',event:'Typhoon Watch'},
+{category:'Marine - Warnings',label:'Gale Warning',color:'#DDA0DD',event:'Gale Warning'},
+{category:'Marine - Warnings',label:'Storm Warning',color:'#9400D3',event:'Storm Warning'},
+{category:'Marine - Warnings',label:'Hazardous Seas Warning',color:'#D8BFD8',event:'Hazardous Seas Warning'},
+{category:'Marine - Warnings',label:'Heavy Freezing Spray Warning',color:'#00BFFF',event:'Heavy Freezing Spray Warning'},
+{category:'Marine - Watches',label:'Gale Watch',color:'#FFB6C1',event:'Gale Watch'},
+{category:'Marine - Watches',label:'Storm Watch',color:'#FFE4B5',event:'Storm Watch'},
+{category:'Marine - Advisories',label:'Small Craft Advisory',color:'#9B7FD8',event:'Small Craft Advisory'},
+{category:'Marine - Advisories',label:'Brisk Wind Advisory',color:'#D8BFD8',event:'Brisk Wind Advisory'},
+{category:'Marine - Advisories',label:'Low Water Advisory',color:'#8B0000',event:'Low Water Advisory'},
+{category:'Mesoscale Discussion',label:'Precipitation',color:'#00A000',event:'Mesoscale Discussion Precip'},
+{category:'Mesoscale Discussion',label:'Severe Weather',color:'#FF0000',event:'Mesoscale Discussion Severe'},
+{category:'Mesoscale Discussion',label:'Winter Weather',color:'#0000FF',event:'Mesoscale Discussion Winter'},
+{category:'911/Other',label:'Shelter In Place Warning',color:'#FF7F7F',event:'Shelter In Place Warning'},
+{category:'911/Other',label:'Evacuation Immediate',color:'#00FF00',event:'Evacuation Immediate'},
+{category:'911/Other',label:'Civil Danger Warning',color:'#FFB6C1',event:'Civil Danger Warning'},
+{category:'911/Other',label:'Civil Emergency Message',color:'#FFB6C1',event:'Civil Emergency Message'},
+{category:'911/Other',label:'Law Enforcement Warning',color:'#A9A9A9',event:'Law Enforcement Warning'},
+{category:'911/Other',label:'Local Area Emergency',color:'#A9A9A9',event:'Local Area Emergency'},
+{category:'911/Other',label:'911 Telephone Outage',color:'#A9A9A9',event:'911 Telephone Outage'},
+{category:'Other',label:'Hazardous Weather Outlook',color:'#FEF9C3',event:'Hazardous Weather Outlook'},
+{category:'Other',label:'Short Term Forecast',color:'#90EE90',event:'Short Term Forecast'}
+];
+const STATE_MAP={"alabama":"al","alaska":"ak","arizona":"az","arkansas":"ar","california":"ca","colorado":"co","connecticut":"ct","delaware":"de","florida":"fl","georgia":"ga","hawaii":"hi","idaho":"id","illinois":"il","indiana":"in","iowa":"ia","kansas":"ks","kentucky":"ky","louisiana":"la","maine":"me","maryland":"md","massachusetts":"ma","michigan":"mi","minnesota":"mn","mississippi":"ms","missouri":"mo","montana":"mt","nebraska":"ne","nevada":"nv","new hampshire":"nh","new jersey":"nj","new mexico":"nm","new york":"ny","north carolina":"nc","north dakota":"nd","ohio":"oh","oklahoma":"ok","oregon":"or","pennsylvania":"pa","rhode island":"ri","south carolina":"sc","south dakota":"sd","tennessee":"tn","texas":"tx","utah":"ut","vermont":"vt","virginia":"va","washington":"wa","west virginia":"wv","wisconsin":"wi","wyoming":"wy","al":"alabama","ak":"alaska","az":"arizona","ar":"arkansas","ca":"california","co":"colorado","ct":"connecticut","de":"delaware","fl":"florida","ga":"georgia","hi":"hawaii","id":"idaho","il":"illinois","in":"indiana","ia":"iowa","ks":"kansas","ky":"kentucky","la":"louisiana","me":"maine","md":"maryland","ma":"massachusetts","mi":"michigan","mn":"minnesota","ms":"mississippi","mo":"missouri","mt":"montana","ne":"nebraska","nv":"nevada","nh":"new hampshire","nj":"new jersey","nm":"new mexico","ny":"new york","nc":"north carolina","nd":"north dakota","oh":"ohio","ok":"oklahoma","or":"oregon","pa":"pennsylvania","ri":"rhode island","sc":"south carolina","sd":"south dakota","tn":"tennessee","tx":"texas","ut":"utah","vt":"vermont","va":"virginia","wa":"washington","wv":"west virginia","wi":"wisconsin","wy":"wyoming","mossouri":"mo"};
+const STATE_CENTERS={"al":[32.8,-86.8],"ak":[64,-150],"az":[34.0,-111.0],"ar":[34.7,-92.5],"ca":[36.7,-119.7],"co":[39.5,-105.5],"ct":[41.6,-72.6],"de":[39.3,-75.5],"fl":[27.7,-81.3],"ga":[32.1,-82.9],"hi":[19.7,-155.6],"id":[44.0,-114.7],"il":[40.0,-89.2],"in":[40.2,-86.1],"ia":[42.0,-93.5],"ks":[38.5,-98.0],"ky":[37.8,-84.2],"la":[31.0,-92.0],"me":[44.6,-69.7],"md":[39.0,-76.7],"ma":[42.2,-71.5],"mi":[44.3,-85.6],"mn":[46.3,-94.6],"ms":[32.7,-89.6],"mo":[38.5,-92.4],"mt":[46.9,-110.3],"ne":[41.5,-99.9],"nv":[39.8,-117.2],"nh":[43.9,-71.5],"nj":[40.1,-74.4],"nm":[34.5,-106.0],"ny":[43.0,-75.0],"nc":[35.7,-79.0],"nd":[47.5,-100.4],"oh":[40.4,-82.9],"ok":[35.0,-97.0],"or":[44.0,-120.5],"pa":[41.2,-77.1],"ri":[41.5,-71.5],"sc":[33.8,-80.9],"sd":[44.2,-100.0],"tn":[35.8,-86.3],"tx":[31.0,-100.0],"ut":[39.3,-111.5],"vt":[44.0,-72.7],"va":[37.9,-79.0],"wa":[47.7,-120.4],"wv":[38.6,-80.4],"wi":[44.5,-89.5],"wy":[43.0,-107.5]};
+let enabledTypes={};
+try{enabledTypes=JSON.parse(localStorage.getItem('wbw_enabled_v2')||'{}');}catch(e){enabledTypes={};}
+if(Object.keys(enabledTypes).length===0){ALL_ALERT_TYPES.forEach(t=>enabledTypes[t.event]=true);localStorage.setItem('wbw_enabled_v2',JSON.stringify(enabledTypes));}
+function turnAllOn(){ALL_ALERT_TYPES.forEach(t=>enabledTypes[t.event]=true);localStorage.setItem('wbw_enabled_v2',JSON.stringify(enabledTypes));buildSettings();loadSevereWarnings();}
+function turnAllOff(){ALL_ALERT_TYPES.forEach(t=>enabledTypes[t.event]=false);localStorage.setItem('wbw_enabled_v2',JSON.stringify(enabledTypes));buildSettings();loadSevereWarnings();}
+let togglesHidden=false;
+function toggleSettings(){
+const panel=document.getElementById('settings-panel');
+const btn=document.getElementById('hideToggleBtn');
+togglesHidden=!togglesHidden;
+if(togglesHidden){
+panel.classList.add('hidden');
+btn.innerHTML='👁️ SHOW TOGGLES';
+btn.style.background='#1a73e8';
+btn.style.color='#fff';
+localStorage.setItem('wbw_toggles_hidden','true');
+}else{
+panel.classList.remove('hidden');
+btn.innerHTML='🙈 HIDE TOGGLES';
+btn.style.background='#222';
+btn.style.color='#FFD700';
+localStorage.setItem('wbw_toggles_hidden','false');
+}
+}
+let severeWarningsData=[];
+let zoneCache={};
+function buildSettings(){
+const panel=document.getElementById('settings-panel');panel.innerHTML='';let lastCat='';
+ALL_ALERT_TYPES.forEach((t)=>{
+if(t.category!==lastCat){const h=document.createElement('div');h.className='settings-group-title';h.innerText=t.category;panel.appendChild(h);lastCat=t.category;}
+const row=document.createElement('div');row.className='settings-row';
+row.innerHTML=`<div class="settings-left"><div class="color-dot" style="background:${t.color}"></div><div>${t.label}</div></div><div class="toggle ${enabledTypes[t.event]?'on':''}" onclick="toggleType('${t.event.replace(/'/g,"\\'")}')"><div class="toggle-knob"></div></div>`;
+panel.appendChild(row);
+});
+const wasHidden=localStorage.getItem('wbw_toggles_hidden')==='true';
+if(wasHidden){togglesHidden=false; toggleSettings();}
+}
+function toggleType(name){enabledTypes[name]=!enabledTypes[name];localStorage.setItem('wbw_enabled_v2',JSON.stringify(enabledTypes));buildSettings();loadSevereWarnings();}
+function buildRadarGrid(){
+const grid=document.getElementById('radar-grid');grid.innerHTML='';
+[...new Set(RADARS)].forEach((id,i)=>{
+if(i>0&&i%4===0){const ad=document.createElement('div');ad.className='ad-inline';ad.innerHTML='<div style="color:#d4af37;font-size:10px">Advertisement — Money every 4 cards</div><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8107327731283027" data-ad-format="auto" data-full-width-responsive="true"></ins>';grid.appendChild(ad);(adsbygoogle=window.adsbygoogle||[]).push({});}
+const s=RADAR_STATES[id]||id;const t=(id+' '+s).toLowerCase();
+const card=document.createElement('div');card.className='card';card.setAttribute('data-search',t);
+card.innerHTML=`<div class="card-top"><strong>${id}</strong><span class="badge">${id.substring(0,2)}</span></div><div class="city">${s}</div><img class="radar-img" loading="lazy" src="https://radar.weather.gov/ridge/standard/${id}_loop.gif"><div class="enlarge-btn" onclick="openModalForId('${id}')">TAP TO ENLARGE — FULL RADAR</div><button class="share-btn" onclick="shareToFacebook('${id}')">📤 SHARE ${id}</button>`;
+const img=card.querySelector('.radar-img');img.addEventListener('click',()=>openModalForId(id));img.addEventListener('error',()=>{card.style.display='none';updateCounts();});img.addEventListener('load',()=>{updateCounts();});
+grid.appendChild(card);
+});
+updateCounts();
+}
+function updateCounts(){
+const radarCards=document.querySelectorAll('#radar-grid.card');
+let visibleRadar=0;
+radarCards.forEach(c=>{if(c.style.display!=='none') visibleRadar++;});
+document.getElementById('radar-count').innerText=visibleRadar;
+const severeCards=document.querySelectorAll('#severe-warnings-container.card');
+let visibleSevere=0;
+severeCards.forEach(c=>{if(c.style.display!=='none') visibleSevere++;});
+document.getElementById('severe-count').innerText=visibleSevere;
+}
+function shareToFacebook(id){
+const radarName=RADAR_STATES[id]||id;
+const specificUrl=SHARE_SITE+'?radar='+id;
+const text=id+' — '+radarName+' — Live Radar — Direct Link: '+specificUrl;
+window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(specificUrl)+'&quote='+encodeURIComponent(text),'_blank');
+}
+function shareSevereToFacebook(i){
+const w=severeWarningsData[i];if(!w)return;
+const p=w.properties;
+const headline=p.headline||p.event;
+const specificUrl=SHARE_SITE+'?severe='+i;
+const text=headline+' — Direct Link: '+specificUrl;
+window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(specificUrl)+'&quote='+encodeURIComponent(text),'_blank');
+}
+function openModalForId(id){document.getElementById('modal-img').style.display='block';document.getElementById('modal-severe-box').style.display='none';document.getElementById('modal-img').src='https://radar.weather.gov/ridge/standard/'+id+'_loop.gif';document.getElementById('modal-title').innerText=id+' — '+(RADAR_STATES[id]||id)+' — FULL RADAR LOOP';document.getElementById('modal').classList.add('show');}
+function openSevereModal(i){
+const w=severeWarningsData[i];if(!w)return;
+const p=w.properties,g=w.geometry,col=getColor(p.event),motion=p.parameters&&p.parameters.eventMotionDescription?p.parameters.eventMotionDescription[0]:'';
+document.getElementById('modal-img').style.display='none';
+const b=document.getElementById('modal-severe-box');b.style.display='block';
+b.innerHTML=`
+<div style="border:3px solid #FFD700;border-radius:16px;padding:0;overflow:hidden;background:#000">
+  <div style="padding:12px;background:#000">
+    <div style="color:${col};font-weight:900;font-size:18px">${p.event} ${motion?'➤ '+motion:''}</div>
+    <div style="color:#FFD700;font-weight:800;font-size:13px;margin:8px 0;line-height:1.4">${p.headline||''}</div>
+    <div style="font-size:12px;color:#FFEC8B;margin-bottom:6px">Where: ${p.areaDesc||''}</div>
+    ${p._realPolygon?'<div style="font-size:10px;color:#00FF00">✅ REAL County/Zone Polygon</div>':''}
+  </div>
+  <div id="modal-severe-map" style="margin:0 8px"></div>
+  <div class="full-message-box" style="margin:10px 8px;border-color:${col}">
+${p.description||'No description available'}\n\n${p.instruction||''}
+  </div>
+  <div style="padding:10px">
+    <button class="share-btn" onclick="shareSevereToFacebook(${i})">📤 SHARE — Direct Link: https://tinyurl.com/WorldBreakingWeather?severe=${i}</button>
+  </div>
+</div>`;
+document.getElementById('modal-title').innerText=p.event+' — FULL MESSAGE + FULL RADAR + POLYGON';
+document.getElementById('modal').classList.add('show');
+setTimeout(()=>{
+try{
+let c=[31,-100],z=5;
+if(g&&g.coordinates){
+if(g.type==='Polygon'&&g.coordinates[0]&&g.coordinates[0][0]){
+const co=g.coordinates[0];if(typeof co[0][0]==='number'){let la=0,lo=0;co.forEach(x=>{lo+=x[0];la+=x[1];});c=[la/co.length,lo/co.length];z=6;}
+}else if(g.type==='MultiPolygon'&&g.coordinates[0]&&g.coordinates[0][0]&&g.coordinates[0][0][0]){
+const co=g.coordinates[0][0];if(typeof co[0][0]==='number'){let la=0,lo=0;co.forEach(x=>{lo+=x[0];la+=x[1];});c=[la/co.length,lo/co.length];z=6;}
+}
+}
+const m=L.map('modal-severe-map').setView(c,z);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);
+L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-{z}/{x}/{y}.png',{opacity:0.9}).addTo(m);
+L.tileLayer('https://tiles.lightningmaps.org/tiles/{z}/{x}/{y}.png',{opacity:0.7}).addTo(m);
+if(g){const gj=L.geoJSON({type:'Feature',geometry:g},{style:{color:col,weight:4,fillColor:col,fillOpacity:0.3}}).addTo(m);try{m.fitBounds(gj.getBounds());}catch(e){}}
+setTimeout(()=>m.invalidateSize(),400);
+}catch(e){}
+},300);
+}
+function closeModal(){document.getElementById('modal').classList.remove('show');document.getElementById('modal-img').style.display='none';document.getElementById('modal-severe-box').style.display='none';}
+function switchTab(n){if(n==='severe')loadSevereWarnings();document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+n).classList.add('active');document.querySelectorAll('.tab-btn').forEach(b=>{if(b.getAttribute('onclick').includes("'"+n+"'"))b.classList.add('active');});}
+const inp=document.getElementById('search');
+if(inp){
+inp.addEventListener('input',()=>{
+const q=inp.value.toLowerCase().trim();
+const qVariant=STATE_MAP[q]||'';
+const searchTerms=[q,qVariant].filter(Boolean);
+const radarCards=document.querySelectorAll('#radar-grid.card');
+let visibleRadar=0;
+radarCards.forEach(c=>{
+const s=(c.getAttribute('data-search')||'').toLowerCase();
+let show=q===''?true:false;
+if(q==='') show=true;
+else{for(const term of searchTerms){if(s.includes(term)){show=true;break;}} if(s.includes(q)) show=true;}
+c.style.display=show?'':'none';
+if(show) visibleRadar++;
+});
+document.getElementById('radar-count').innerText=visibleRadar;
+const severeCards=document.querySelectorAll('#severe-warnings-container.card');
+let visibleSevere=0;
+severeCards.forEach(c=>{
+const searchText=(c.getAttribute('data-search')||'').toLowerCase();
+let show=q===''?true:false;
+if(q==='') show=true;
+else{for(const term of searchTerms){if(searchText.includes(term)){show=true;break;}} if(searchText.includes(q)) show=true; if(q==='mossouri'||q==='missouri'||q==='mo'){if(searchText.includes('missouri')||searchText.includes(', mo')||searchText.includes(' mo ')) show=true;} if(q==='texas'||q==='tx'){if(searchText.includes('texas')||searchText.includes(', tx')) show=true;}}
+c.style.display=show?'':'none';
+if(show) visibleSevere++;
+});
+document.getElementById('severe-count').innerText=visibleSevere;
+document.querySelectorAll('#severe-warnings-container.ad-inline').forEach(ad=>{ad.style.display=q===''?'':'none';});
+document.querySelectorAll('#radar-grid.ad-inline').forEach(ad=>{ad.style.display=q===''?'':'none';});
+});
+}
+function getColor(e){
+e=(e||'').toLowerCase();
+if(e.includes('tornado warning'))return '#FF0000';
+if(e.includes('tornado watch'))return '#FF0000';
+if(e.includes('severe thunderstorm warning'))return '#FF8C00';
+if(e.includes('flash flood warning'))return '#00FF00';
+if(e.includes('special marine'))return '#4B004B';
+if(e.includes('blizzard'))return '#FF4500';
+if(e.includes('winter storm'))return '#FF69B4';
+if(e.includes('flood warning'))return '#00FF00';
+if(e.includes('small craft'))return '#9B7FD8';
+if(e.includes('gale'))return '#DDA0DD';
+if(e.includes('storm warning'))return '#9400D3';
+if(e.includes('red flag'))return '#FF1493';
+if(e.includes('hurricane'))return '#DC143C';
+if(e.includes('tropical storm'))return '#8B0000';
+if(e.includes('shelter in place'))return '#FF7F7F';
+if(e.includes('evacuation'))return '#00FF00';
+if(e.includes('hazardous weather outlook'))return '#FEF9C3';
+if(e.includes('short term'))return '#90EE90';
+if(e.includes('precipitation'))return '#00A000';
+if(e.includes('severe'))return '#FF0000';
+return '#FFD700';
+}
+function makeFallbackPolygon(areaDesc){
+let stateAbbr=null;
+const lower=areaDesc.toLowerCase();
+for(const abbr in STATE_CENTERS){
+if(lower.includes(', '+abbr)||lower.includes(' '+abbr+' ')||lower.includes(abbr+' county')){stateAbbr=abbr;break;}
+}
+if(!stateAbbr){
+for(const name in STATE_MAP){
+if(lower.includes(name)){const ab=STATE_MAP[name];if(STATE_CENTERS[ab]){stateAbbr=ab;break;}}
+}
+}
+if(!stateAbbr) stateAbbr='mo';
+const center=STATE_CENTERS[stateAbbr]||[38.5,-92.4];
+const lat=center[0],lon=center[1];
+const size=0.7;
+return {type:'Polygon',coordinates:[[[lon-size,lat-size],[lon+size,lat-size],[lon+size,lat+size],[lon-size,lat+size],[lon-size,lat-size]]]};
+}
+async function fetchZoneGeometry(ugc){
+if(zoneCache[ugc]) return zoneCache[ugc];
+const types=['county','forecast','fire','marine','coastal'];
+for(const t of types){
+try{
+const resp=await fetch(`https://api.weather.gov/zones/${t}/${ugc}`);
+if(!resp.ok) continue;
+const data=await resp.json();
+if(data.geometry){zoneCache[ugc]=data.geometry; return data.geometry;}
+}catch(e){continue;}
+}
+return null;
+}
+async function buildRealPolygonFromUGC(ugcList){
+let mergedCoords=[];
+for(const ugc of ugcList.slice(0,10)){
+const geom=await fetchZoneGeometry(ugc);
+if(!geom) continue;
+if(geom.type==='Polygon'){mergedCoords.push(geom.coordinates);}
+else if(geom.type==='MultiPolygon'){mergedCoords.push(...geom.coordinates);}
+}
+if(mergedCoords.length===0) return null;
+if(mergedCoords.length===1){return {type:'Polygon',coordinates:mergedCoords[0]};}
+else{return {type:'MultiPolygon',coordinates:mergedCoords};}
+}
+async function loadSevereWarnings(){
+const cont=document.getElementById('severe-warnings-container'),last=document.getElementById('severe-last-updated');
+if(last)last.innerText='Loading ALL warnings — real polygons + full messages...';
+let warns=[];let mcdWarnings=[];
+try{
+const nwsResp=await fetch('https://api.weather.gov/alerts/active');
+if(nwsResp.ok){
+const data=await nwsResp.json();
+let features=data.features||[];
+features=features.filter(f=>enabledTypes[f.properties.event]!==false);
+for(let f of features){
+if(f.geometry&&f.geometry!==null){warns.push(f);}
+else{
+const ugcList=f.properties.geocode&&f.properties.geocode.UGC? f.properties.geocode.UGC : [];
+let realGeom=null;
+if(ugcList.length>0){realGeom=await buildRealPolygonFromUGC(ugcList);}
+if(realGeom){f.geometry=realGeom; f.properties._realPolygon=true; warns.push(f);}
+else{f.geometry=makeFallbackPolygon(f.properties.areaDesc||''); f.properties._fallbackPolygon=true; warns.push(f);}
+}
+}
+}
+}catch(e){console.log('NWS alerts failed',e);}
+// MPD
+try{
+const mpdResp=await fetch('https://mesonet.agron.iastate.edu/geojson/mpd.geojson');
+if(mpdResp.ok){
+const data=await mpdResp.json();
+(data.features||[]).forEach(f=>{
+const p=f.properties||{};
+if(enabledTypes['Mesoscale Discussion Precip']!==false){
+mcdWarnings.push({properties:{event:'Mesoscale Discussion - Precipitation',headline:`MPD: #${p.mpd_num||''} affects: ${p.areas||''}`,areaDesc:p.areas||'',description:`Concerning: ${p.concerning||''}\n\n${p.discussion||''}`,instruction:`Expires: ${p.expire||''}`,parameters:{eventMotionDescription:[p.concerning||'Heavy rainfall']},_realPolygon:true},geometry:f.geometry||makeFallbackPolygon(p.areas||'TX')});
+}
+});
+}
+}catch(e){}
+try{
+const mcdResp=await fetch('https://mesonet.agron.iastate.edu/geojson/mcd.geojson');
+if(mcdResp.ok){
+const data=await mcdResp.json();
+(data.features||[]).forEach(f=>{
+const p=f.properties||{};
+let key='Mesoscale Discussion Severe';
+const conc=(p.concerning||'').toLowerCase();
+if(conc.includes('winter')) key='Mesoscale Discussion Winter';
+else if(conc.includes('precip')||conc.includes('heavy')) key='Mesoscale Discussion Precip';
+if(enabledTypes[key]!==false){
+mcdWarnings.push({properties:{event:`Mesoscale Discussion - ${p.type||''}`,headline:`MCD: #${p.mcd_num||''}: ${p.concerning}`,areaDesc:p.areas||'',description:p.discussion||'',instruction:'',parameters:{eventMotionDescription:[p.concerning]},_realPolygon:true},geometry:f.geometry||makeFallbackPolygon(p.areas||'TX')});
+}
+});
+}
+}catch(e){}
+const allWarns=[...warns,...mcdWarnings];
+severeWarningsData=allWarns;
+document.getElementById('severe-count').innerText=allWarns.length;
+if(last)last.innerText=`Updated: ${new Date().toLocaleString()} — ${allWarns.length} active (${mcdWarnings.length} MPD/MCD) — Tap ENLARGE for FULL MESSAGE + FULL RADAR`;
+cont.innerHTML='';
+if(allWarns.length===0){cont.innerHTML='<div class="card" style="grid-column:1/-1">No active warnings — Tap 🔵 TURN ALL ON then 🔄 REFRESH ALL. Type Missouri or Mossouri to test.</div>';updateCounts();return;}
+allWarns.forEach((f,i)=>{
+const p=f.properties,col=getColor(p.event),id='severe-map-'+i;
+const searchText=(p.event+' '+p.headline+' '+p.areaDesc).toLowerCase();
+const card=document.createElement('div');card.className='card';card.setAttribute('data-search',searchText);card.style.borderLeft='6px solid '+col;
+if(i>0&&i%4===0){const ad=document.createElement('div');ad.className='ad-inline';ad.innerHTML='<div style="color:#d4af37;font-size:10px">Advertisement — Money every 4 cards</div><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8107327731283027" data-ad-slot="1234567890" data-ad-format="auto" data-full-width-responsive="true"></ins>';cont.appendChild(ad);(adsbygoogle=window.adsbygoogle||[]).push({});}
+const badge=p._realPolygon?'<div style="font-size:10px;color:#00FF00">✅ REAL Polygon</div>':p._fallbackPolygon?'<div style="font-size:10px;color:#FFA500">⚠️ County-made</div>':'';
+card.innerHTML=`<div style="color:${col};font-weight:800;font-size:12px">${p.event}</div><div style="color:#FFD700;font-weight:800;font-size:11px;margin:5px 0">${p.headline||''}</div><div style="font-size:10px;color:#FFEC8B">Where: ${p.areaDesc||''}</div>${badge}<div id="${id}" class="severe-radar-map" style="border-color:${col}"></div><div class="enlarge-btn" onclick="openSevereModal(${i})">TAP TO ENLARGE — FULL MESSAGE + FULL RADAR + POLYGON</div><button class="share-btn" onclick="shareSevereToFacebook(${i})">📤 SHARE — Direct Link</button>`;
+cont.appendChild(card);
+setTimeout(()=>{
+try{
+let c=[31,-100],z=5;const g=f.geometry;
+if(g&&g.coordinates){
+if(g.type==='Polygon'&&g.coordinates[0]&&g.coordinates[0][0]){
+const co=g.coordinates[0];if(typeof co[0][0]==='number'){let la=0,lo=0;co.forEach(x=>{lo+=x[0];la+=x[1];});c=[la/co.length,lo/co.length];z=6;}
+}else if(g.type==='MultiPolygon'&&g.coordinates[0]&&g.coordinates[0][0]&&g.coordinates[0][0][0]){
+const co=g.coordinates[0][0];if(typeof co[0][0]==='number'){let la=0,lo=0;co.forEach(x=>{lo+=x[0];la+=x[1];});c=[la/co.length,lo/co.length];z=6;}
+}
+}
+const m=L.map(id).setView(c,z);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);
+L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-{z}/{x}/{y}.png',{opacity:0.85}).addTo(m);
+L.tileLayer('https://tiles.lightningmaps.org/tiles/{z}/{x}/{y}.png',{opacity:0.7}).addTo(m);
+if(g){const gj=L.geoJSON({type:'Feature',geometry:g},{style:{color:col,weight:4,fillColor:col,fillOpacity:0.25}}).addTo(m);try{m.fitBounds(gj.getBounds());}catch(e){}}
+}catch(e){}
+},400);
+});
+const currentQ=(document.getElementById('search').value||'').toLowerCase().trim();
+if(currentQ!==''){document.getElementById('search').dispatchEvent(new Event('input'));}else{updateCounts();}
+}
+window.addEventListener('DOMContentLoaded',()=>{
+buildSettings();
+buildRadarGrid();
+loadSevereWarnings();
+});
+</script>
+</body>
+</html>
