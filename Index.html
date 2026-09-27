@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BREAKING WEATHER</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8107327731283027" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{background:#fff;color:#000;font-family:system-ui;padding:12px;padding-bottom:90px}
+#search{width:100%;padding:14px;border-radius:16px;border:2px solid #d4af37;background:#111;color:#FFD700;margin:10px 0;position:sticky;top:8px;z-index:40;font-size:16px}
+.tabs{display:flex;gap:8px;margin:10px 0}.tab{flex:1;padding:12px;border-radius:999px;border:2px solid #3a3000;background:#111;color:#9a8a4a;font-weight:800;text-align:center;cursor:pointer}.tab.active{background:#FFD700;color:#000;border-color:#FFD700}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.card{border:2px solid #3a3000;border-radius:16px;background:#111;color:#fff;padding:10px;min-height:280px;position:relative;overflow:hidden}
+.city{font-weight:800;color:#FFEC8B;font-size:11px;margin-top:4px;min-height:18px}
+.mini-map{width:100%;height:160px;border-radius:12px;border:2px solid #333;margin-top:6px;background:#000;z-index:1}
+.radar-img{width:100%;height:140px;object-fit:cover;border-radius:12px;margin-top:6px;background:#000;cursor:pointer;display:block;border:1px solid #333}
+.enlarge-btn{color:#FFD700;font-weight:800;cursor:pointer;padding:9px 0;font-size:11px;text-align:center;background:#000;border:1px solid #3a3000;border-radius:8px;margin-top:6px}
+.share-btn{width:100%;padding:9px;border-radius:999px;border:2px solid #d4af37;background:#000;color:#FFD700;font-weight:800;font-size:10px;cursor:pointer;margin-top:6px}
+.ad-inline{grid-column:1/-1;background:#111;border:1px dashed #222;border-radius:12px;padding:8px;text-align:center;min-height:80px}
+.sticky-ad{position:fixed;bottom:0;left:0;right:0;background:#000;border-top:1px solid #FFD700;min-height:70px;text-align:center;z-index:1000;padding:4px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:14px 12px;border-bottom:1px solid #e0e0e0;background:#fff}
+.group-title{font-size:18px;font-weight:800;color:#000;margin:20px 0 6px 12px}
+.switch{width:48px;height:28px;background:#ccc;border-radius:999px;position:relative;cursor:pointer}.switch.on{background:#2a7fff}.switch:after{content:'';position:absolute;width:22px;height:22px;background:#fff;border-radius:50%;top:3px;left:3px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}.switch.on:after{left:23px}
+#modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:99999;flex-direction:column;overflow:hidden}#modal.show{display:flex!important}
+.modal-ad{width:100%;height:70px;min-height:70px;background:#111;border-top:1px solid #d4af37;border-bottom:1px solid #d4af37;text-align:center;padding:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.modal-center{flex:1;display:flex;flex-direction:column;align-items:center;width:100%;padding:10px;overflow:auto;background:#000}
+#modal-map{width:96vw;height:58vh;border-radius:16px;border:3px solid #FFD700;z-index:1;min-height:400px}
+#modal-img{max-width:96vw;max-height:30vh;width:auto;height:auto;border-radius:16px;border:3px solid #FFD700;object-fit:contain;display:block;margin:10px auto 0 auto}
+select{padding:14px;border-radius:12px;background:#fff;color:#000;border:2px solid #ccc;width:100%;margin:6px 0;font-weight:700;font-size:16px}
+.dot{width:22px;height:22px;border-radius:6px;flex-shrink:0}
+.reset-btn{width:95%;margin:16px auto;display:block;padding:14px;background:#2a5bd7;color:#fff;border:none;border-radius:12px;font-weight:800;font-size:16px}
+.white-panel{background:#fff;border-radius:16px;padding-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.1);margin-bottom:12px}
+</style></head><body>
+<h1>BREAKING WEATHER</h1>
+<input id="search" placeholder="Type Texas, TX, Louisiana, LA, Florida, Tornado, Flood, Marine...">
+<div class="tabs"><div class="tab active" id="tab-radars" onclick="showTab('radars')">🛰️ 170 Radars (<span id="radar-count">0</span>)</div><div class="tab" id="tab-warnings" onclick="showTab('warnings')">🚨 ALL Warnings (<span id="warning-count">0</span>)</div></div>
+<div class="grid" id="radar-grid"></div>
+<div id="warnings-panel" style="display:none"></div>
+<div id="modal">
+<div class="modal-ad"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8107327731283027" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
+<div class="modal-center"><div id="modal-map"></div><img id="modal-img" style="display:none"><div id="modal-title" style="color:#FFD700;font-weight:900;margin-top:10px;text-align:center;font-size:14px"></div><div id="modal-desc" style="color:#ccc;font-size:11px;margin-top:10px;white-space:pre-wrap;text-align:left;max-width:96vw;line-height:1.4;background:#111;padding:10px;border-radius:12px"></div><button onclick="closeModal()" style="margin-top:14px;background:#FFD700;color:#000;padding:11px 26px;border-radius:999px;font-weight:900">✕ CLOSE</button></div>
+<div class="modal-ad"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8107327731283027" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
+</div>
+<div class="sticky-ad"><button onclick="this.parentElement.style.display='none'" style="position:absolute;top:2px;right:8px;background:#FFD700;color:#000;border:none;border-radius:50%;width:20px;height:20px">✕</button><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8107327731283027" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({});</script></div>
+<script>
+const SHARE_SITE='https://worldbreakingweather.github.io';
+const RADARS=["KABR","KABX","KAKQ","KAMA","KAMX","KAPX","KARX","KATX","KBBX","KBGM","KBIS","KBLX","KBMX","KBOX","KBRO","KBUF","KBYX","KCAE","KCBW","KCBX","KCCX","KCLE","KCLX","KCRP","KCXX","KCYS","KDAX","KDDC","KDFX","KDGX","KDMX","KDOX","KDTX","KDVN","KDYX","KEAX","KEMX","KENX","KEOX","KEPZ","KESX","KEVX","KEWX","KEYX","KFCX","KFDR","KFDX","KFFC","KFSD","KFSX","KFTG","KFWX","KGGW","KGJX","KGLD","KGRB","KGRK","KGRR","KGWX","KGYX","KHDC","KHDX","KHGX","KHNX","KHPX","KHTX","KICT","KICX","KILN","KILX","KIND","KINX","KIWA","KIWX","KJAN","KJAX","KJGX","KJKL","KLBB","KLCH","KLIX","KLNX","KLOT","KLRX","KLSX","KLTX","KLVX","KLWX","KLZK","KMAF","KMAX","KMBX","KMHX","KMKX","KMLB","KMLX","KMMX","KMPX","KMQT","KMRX","KMSX","KMTX","KMUX","KMVX","KMXX","KNKX","KNQA","KOAX","KOHX","KOKX","KOTX","KPAH","KPBZ","KPDT","KPOE","KPUX","KRAX","KRGX","KRIW","KRLX","KRTX","KSFX","KSJT","KSOX","KSRX","KTBW","KTFX","KTWX","KTYX","KUDX","KUEX","KVAX","KVBX","KVNX","KVTX","KVWX","KYUX","PABC","PAHG","PAIH","PAKC","PAPD","PHKI","PHKM","PHMO","PHWA","PGUA","TJUA","KFWS","KTLX"];
+const RADAR_STATES={"KABR":"South Dakota SD","KABX":"New Mexico NM","KAKQ":"Virginia VA","KAMA":"Texas TX Amarillo TX","KAMX":"Florida FL Miami FL","KAPX":"Michigan MI","KARX":"Wisconsin WI","KATX":"Washington WA Seattle WA","KBBX":"California CA","KBGM":"New York NY","KBIS":"North Dakota ND","KBLX":"Montana MT","KBMX":"Alabama AL","KBOX":"Massachusetts MA","KBRO":"Texas TX Brownsville TX","KBUF":"New York NY","KBYX":"Florida FL Key West FL","KCAE":"South Carolina SC Columbia SC","KCBW":"Maine ME","KCBX":"Idaho ID","KCCX":"Pennsylvania PA","KCLE":"Ohio OH Cleveland OH","KCLX":"South Carolina SC Charleston SC","KCRP":"Texas TX Corpus Christi TX","KCXX":"Vermont VT","KCYS":"Wyoming WY","KDAX":"California CA Sacramento CA","KDDC":"Kansas KS Dodge City KS","KDFX":"Texas TX Del Rio TX","KDGX":"Mississippi MS Jackson MS","KDMX":"Iowa IA Des Moines IA","KDOX":"Delaware DE","KDTX":"Michigan MI Detroit MI","KDVN":"Iowa IA Davenport IA","KDYX":"Texas TX Dyess AFB TX","KEAX":"Missouri MO Kansas City MO","KEMX":"Arizona AZ Tucson AZ","KENX":"New York NY Albany NY","KEOX":"Alabama AL","KEPZ":"Texas TX El Paso TX","KESX":"Wisconsin WI","KEVX":"Florida FL Eglin FL","KEWX":"Texas TX San Antonio TX","KEYX":"California CA Edwards CA","KFCX":"Virginia VA Roanoke VA","KFDR":"Oklahoma OK Altus OK","KFDX":"New Mexico NM Albuquerque NM","KFFC":"Georgia GA Atlanta GA","KFSD":"South Dakota SD Sioux Falls SD","KFSX":"Arizona AZ Flagstaff AZ","KFTG":"Colorado CO Denver CO","KFWX":"California CA Los Angeles CA","KGGW":"Montana MT Glasgow MT","KGJX":"Colorado CO Grand Junction CO","KGLD":"Kansas KS Goodland KS","KGRB":"Wisconsin WI Green Bay WI","KGRK":"Texas TX Fort Hood TX","KGRR":"Michigan MI Grand Rapids MI","KGWX":"Mississippi MS Greenwood MS","KGYX":"Maine ME Portland ME","KHDC":"Louisiana LA Hammond LA","KHDX":"New Mexico NM Holloman NM","KHGX":"Texas TX Houston TX Galveston TX","KHNX":"California CA Hanford CA","KHPX":"Kentucky KY","KHTX":"Alabama AL Huntsville AL","KICT":"Kansas KS Wichita KS","KICX":"Utah UT Cedar City UT","KILN":"Ohio OH Wilmington OH","KILX":"Illinois IL Lincoln IL","KIND":"Indiana IN Indianapolis IN","KINX":"Oklahoma OK Tulsa OK","KIWA":"Arizona AZ Phoenix AZ","KIWX":"Indiana IN Fort Wayne IN","KJAN":"Mississippi MS Jackson MS","KJAX":"Florida FL Jacksonville FL","KJGX":"Georgia GA Robins AFB GA","KJKL":"Kentucky KY Jackson KY","KLBB":"Texas TX Lubbock TX","KLCH":"Louisiana LA Lake Charles LA","KLIX":"Louisiana LA New Orleans LA","KLNX":"Nebraska NE North Platte NE","KLOT":"Illinois IL Chicago IL","KLRX":"Nevada NV Elko NV","KLSX":"Missouri MO St Louis MO","KLTX":"North Carolina NC Wilmington NC","KLVX":"Kentucky KY Louisville KY","KLWX":"Virginia VA Washington DC Sterling VA","KLZK":"Arkansas AR Little Rock AR","KMAF":"Texas TX Midland TX","KMAX":"Minnesota MN","KMBX":"North Dakota ND Minot ND","KMHX":"North Carolina NC Morehead City NC","KMKX":"Wisconsin WI Milwaukee WI","KMLB":"Florida FL Melbourne FL","KMLX":"California CA","KMMX":"Minnesota MN","KMPX":"Minnesota MN Minneapolis MN","KMQT":"Michigan MI Marquette MI","KMRX":"Tennessee TN Morristown TN","KMSX":"Montana MT Missoula MT","KMTX":"Montana MT","KMUX":"California CA San Francisco CA","KMVX":"North Dakota ND Grand Forks ND","KMXX":"Alabama AL","KNKX":"California CA San Diego CA","KNQA":"Tennessee TN Memphis TN","KOAX":"Nebraska NE Omaha NE","KOHX":"Tennessee TN Nashville TN","KOKX":"New York NY New York NY Upton NY","KOTX":"Washington WA Spokane WA","KPAH":"Kentucky KY Paducah KY","KPBZ":"Pennsylvania PA Pittsburgh PA","KPDT":"Oregon OR Pendleton OR","KPOE":"Louisiana LA Fort Polk LA","KPUX":"Colorado CO Pueblo CO","KRAX":"North Carolina NC Raleigh NC","KRGX":"Nevada NV Reno NV","KRIW":"Wyoming WY Riverton WY","KRLX":"West Virginia WV Charleston WV","KRTX":"Oregon OR Portland OR","KSFX":"Idaho ID Pocatello ID","KSJT":"Texas TX San Angelo TX","KSOX":"California CA Santa Ana CA","KSRX":"Arkansas AR Fort Smith AR","KTBW":"Florida FL Tampa FL","KTFX":"Montana MT Great Falls MT","KTWX":"Kansas KS Topeka KS","KTYX":"New York NY Montague NY","KUDX":"South Dakota SD Rapid City SD","KUEX":"Nebraska NE Hastings NE","KVAX":"Georgia GA Moody AFB GA","KVBX":"California CA Vandenberg CA","KVNX":"Oklahoma OK Vance AFB OK","KVTX":"California CA Los Angeles CA","KVWX":"Indiana IN Evansville IN","KYUX":"Arizona AZ Yuma AZ","PABC":"Alaska AK Bethel AK","PAHG":"Alaska AK Kenai AK","PAIH":"Alaska AK Middleton AK","PAKC":"Alaska AK Anchorage AK","PAPD":"Alaska AK Fairbanks AK","PHKI":"Hawaii HI Kauai HI","PHKM":"Hawaii HI Kamuela HI","PHMO":"Hawaii HI Molokai HI","PHWA":"Hawaii HI Kohala HI","PGUA":"Guam GU","TJUA":"Puerto Rico PR San Juan PR","KFWS":"Texas TX Fort Worth TX Dallas TX","KTLX":"Oklahoma OK Oklahoma City OK"};
+const FULL_STATE_MAP={"alabama":"al","alaska":"ak","arizona":"az","arkansas":"ar","california":"ca","colorado":"co","connecticut":"ct","delaware":"de","florida":"fl","georgia":"ga","hawaii":"hi","idaho":"id","illinois":"il","indiana":"in","iowa":"ia","kansas":"ks","kentucky":"ky","louisiana":"la","maine":"me","maryland":"md","massachusetts":"ma","michigan":"mi","minnesota":"mn","mississippi":"ms","missouri":"mo","montana":"mt","nebraska":"ne","nevada":"nv","new hampshire":"nh","new jersey":"nj","new mexico":"nm","new york":"ny","north carolina":"nc","north dakota":"nd","ohio":"oh","oklahoma":"ok","oregon":"or","pennsylvania":"pa","rhode island":"ri","south carolina":"sc","south dakota":"sd","tennessee":"tn","texas":"tx","utah":"ut","vermont":"vt","virginia":"va","washington":"wa","west virginia":"wv","wisconsin":"wi","wyoming":"wy"};
+const TUGA_COLORS={"Tornado Warning":"#FF0000","Severe Thunderstorm Warning":"#FFA500","Flash Flood Warning":"#00C853","Special Marine Warning":"#6A1B4D","Tornado Watch":"#FF5252","Severe Thunderstorm Watch":"#FFB74D","Flash Flood Watch":"#81D4FA","Special Weather Statement":"#9575CD","Marine Weather Statement":"#FFCC80","Blizzard Warning":"#EF6C00","Snow Squall Warning":"#00B0FF","Ice Storm Warning":"#6A1B9A","Winter Storm Warning":"#F48FB1","Lake Effect Snow Warning":"#00897B","Avalanche Warning":"#1E88E5","Extreme Cold Warning":"#1A365D","Freeze Warning":"#4A3A8A","Winter Storm Watch":"#4A6FE3","Avalanche Watch":"#FFAB73","Extreme Cold Watch":"#1565C0","Freeze Watch":"#B2DFDB","Winter Weather Advisory":"#90CAF9","Cold Weather Advisory":"#64B5F6","Frost Advisory":"#7986CB","Tsunami Warning":"#FF6E40","Flood Warning":"#2E7D32","Flood (forecast point) Warning":"#1B5E20","Coastal Flood Warning":"#26A69A","Lakeshore Flood Warning":"#66BB6A","High Surf Warning":"#388E3C","Tsunami Watch":"#E040FB","Flood Watch":"#6B8E8E","Coastal Flood Watch":"#90CAF9","Lakeshore Flood Watch":"#80CBC4","Flood (forecast point) Watch":"#6A9A8A","Tsunami Advisory":"#A65E26","Flood Advisory":"#A5D6A7","Coastal Flood Advisory":"#B2EBF2","Lakeshore Flood Advisory":"#B2EBF2","High Surf Advisory":"#BA68C8","Flood (forecast point) Advisory":"#A5D6A7","Rip Current Statement":"#4DD0E1","Beach Hazards Statement":"#4DD0E1","Coastal Flood Statement":"#B0BEC5","Hydrologic Outlook":"#81C784","Extreme Wind Warning":"#FF9800","Hurricane Force Wind Warning":"#CD6155","Dust Storm Warning":"#FFE4B5","Blowing Dust Warning":"#FFE4B5","High Wind Warning":"#D4AC0D","Hurricane Force Wind Watch":"#9C27B0","High Wind Watch":"#B7950B","Dense Fog Advisory":"#5D6D7E","Dense Smoke Advisory":"#F7DC6F","Dust Advisory":"#A9A67D","Blowing Dust Advisory":"#A9A67D","Lake Wind Advisory":"#D2B48C","Wind Advisory":"#D2B48C","Freezing Fog Advisory":"#008080","Air Stagnation Advisory":"#808080","Air Quality Alert":"#808080","Fire Warning":"#8D4F2A","Extreme Heat Warning":"#C2185B","Red Flag Warning":"#E91E63","Extreme Heat Watch":"#8B0000","Fire Weather Watch":"#FFE0B2","Heat Advisory":"#FF8A65","Storm Surge Warning":"#9C27B0","Hurricane Warning":"#D32F2F","Typhoon Warning":"#D32F2F","Tropical Storm Warning":"#8B0000","Storm Surge Watch":"#BA68C8","Hurricane Watch":"#E91E63","Typhoon Watch":"#E91E63","Tropical Storm Watch":"#EF9A9A","Heavy Freezing Spray Warning":"#00BFFF","Storm Warning":"#8E24AA","Gale Warning":"#CE93D8","Hazardous Seas Warning":"#B39DDB","Storm Watch":"#FFECB3","Gale Watch":"#F8BBD0","Hazardous Seas Watch":"#4527A0","Heavy Freezing Spray Watch":"#BC8F8F","Small Craft Advisory":"#D1C5E8","Brisk Wind Advisory":"#D1C5E8","Freezing Spray Advisory":"#00BFFF","Low Water Advisory":"#8B0000","Shelter In Place Warning":"#FF8A65","Evacuation Immediate":"#7CFC00","Civil Danger Warning":"#FFB6C1","Civil Emergency Message":"#FFB6C1","Law Enforcement Warning":"#BDBDBD","Local Area Emergency":"#BDBDBD","911 Telephone Outage":"#BDBDBD","Hazardous Weather Outlook":"#FFF9C4","Short Term Forecast":"#81C784"};
+function getTugaColor(e){return TUGA_COLORS[e]||"#FF0000";}
+let allAlerts=[];let leafletMap=null;let miniMaps={};let miniMapsInitialized=false;
+function buildRadarGrid(){
+const grid=document.getElementById('radar-grid');grid.innerHTML='';
+[...new Set(RADARS)].forEach((id,i)=>{
+if(i>0&&i%4===0){const ad=document.createElement('div');ad.className='ad-inline';ad.innerHTML='<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8107327731283027" data-ad-format="auto" data-full-width-responsive="true"></ins>';grid.appendChild(ad);try{(adsbygoogle=window.adsbygoogle||[]).push({});}catch(e){}}
+const s=RADAR_STATES[id]||id;const t=(id+' '+s).toLowerCase();
+const card=document.createElement('div');card.className='card';card.setAttribute('data-search',t);
+card.innerHTML=`<div style="display:flex;justify-content:space-between"><strong>${id}</strong><span style="background:#FFD700;color:#000;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800">LIVE</span></div><div class="city">${s}</div><img class="radar-img" loading="lazy" src="https://radar.weather.gov/ridge/standard/${id}_loop.gif" onerror="this.onerror=null;this.src='https://radar.weather.gov/ridge/Conus/RadarImg/latest_radar.gif'"><div class="enlarge-btn" onclick="openRadar('${id}')">TAP TO ENLARGE — FULL RADAR</div><button class="share-btn" onclick="shareRadar('${id}')">📤 SHARE ${id}</button>`;
+const img=card.querySelector('.radar-img');img.addEventListener('click',()=>openRadar(id));img.addEventListener('load',()=>updateCounts());
+grid.appendChild(card);
+});
+updateCounts();fetchWarnings();
+}
+function updateCounts(){let c=0;document.querySelectorAll('#radar-grid.card').forEach(x=>{if(window.getComputedStyle(x).display!=='none') c++;});document.getElementById('radar-count').innerText=c;}
+async function fetchWarnings(){
+try{const r=await fetch('https://api.weather.gov/alerts/active');const d=await r.json();allAlerts=d.features||[];document.getElementById('warning-count').innerText=allAlerts.length;renderWarnings(allAlerts);}catch(e){document.getElementById('warning-count').innerText='0';}
+}
+function renderWarnings(list){
+const panel=document.getElementById('warnings-panel');panel.innerHTML='';
+let html='<select id="catSelect" onchange="filterCat(this.value)"><option value="All">All</option><option value="Severe">Severe</option><option value="Winter">Winter</option><option value="Hydro">Hydro</option><option value="Wind/Air">Wind/Air</option><option value="Fire/Heat">Fire/Heat</option><option value="Tropical">Tropical</option><option value="Marine">Marine</option><option value="Other">Other</option></select>';
+html+='<div class="white-panel" id="whitePanel">';
+function addRows(cat, groups){
+html+=`<div data-cat="${cat}">`;
+Object.keys(groups).forEach(g=>{
+html+=`<div class="group-title">${g}</div>`;
+groups[g].forEach(it=>{
+const col=it.color||TUGA_COLORS[it.name]||'#FF0000';
+html+=`<div class="toggle-row" data-cat="${cat}" data-event="${it.name.toLowerCase()}"><div style="display:flex;align-items:center;gap:10px"><div class="dot" style="background:${col}"></div><span>${it.name}</span></div><div style="display:flex;align-items:center;gap:10px"><div class="switch on" data-name="${it.name.toLowerCase()}" onclick="toggleEvent(this)"></div><span style="color:#888">›</span></div></div>`;
+});
+});
+html+='</div>';
+}
+addRows('Severe',{Warnings:[{name:"Tornado Warning",color:"#FF0000"},{name:"Severe Thunderstorm Warning",color:"#FFA500"},{name:"Flash Flood Warning",color:"#00C853"},{name:"Special Marine Warning",color:"#6A1B4D"}],Watches:[{name:"Tornado Watch",color:"#FF5252"},{name:"Severe Thunderstorm Watch",color:"#FFB74D"},{name:"Flash Flood Watch",color:"#81D4FA"}],Statements:[{name:"Special Weather Statement",color:"#9575CD"},{name:"Marine Weather Statement",color:"#FFCC80"}]});
+addRows('Winter',{Warnings:[{name:"Blizzard Warning",color:"#EF6C00"},{name:"Snow Squall Warning",color:"#00B0FF"},{name:"Ice Storm Warning",color:"#6A1B9A"},{name:"Winter Storm Warning",color:"#F48FB1"},{name:"Lake Effect Snow Warning",color:"#00897B"},{name:"Avalanche Warning",color:"#1E88E5"},{name:"Extreme Cold Warning",color:"#1A365D"},{name:"Freeze Warning",color:"#4A3A8A"}],Watches:[{name:"Winter Storm Watch",color:"#4A6FE3"},{name:"Avalanche Watch",color:"#FFAB73"},{name:"Extreme Cold Watch",color:"#1565C0"},{name:"Freeze Watch",color:"#B2DFDB"}],Advisories:[{name:"Winter Weather Advisory",color:"#90CAF9"},{name:"Cold Weather Advisory",color:"#64B5F6"},{name:"Frost Advisory",color:"#7986CB"}]});
+addRows('Hydro',{Warnings:[{name:"Tsunami Warning",color:"#FF6E40"},{name:"Flood (forecast point) Warning",color:"#1B5E20"},{name:"Flood Warning",color:"#2E7D32"},{name:"Coastal Flood Warning",color:"#26A69A"},{name:"Lakeshore Flood Warning",color:"#66BB6A"},{name:"High Surf Warning",color:"#388E3C"}],Watches:[{name:"Tsunami Watch",color:"#E040FB"},{name:"Flood (forecast point) Watch",color:"#6A9A8A"},{name:"Flood Watch",color:"#6B8E8E"},{name:"Coastal Flood Watch",color:"#90CAF9"},{name:"Lakeshore Flood Watch",color:"#80CBC4"}],Advisories:[{name:"Tsunami Advisory",color:"#A65E26"},{name:"Flood (forecast point) Advisory",color:"#A5D6A7"},{name:"Flood Advisory",color:"#A5D6A7"},{name:"Coastal Flood Advisory",color:"#B2EBF2"},{name:"Lakeshore Flood Advisory",color:"#B2EBF2"},{name:"High Surf Advisory",color:"#BA68C8"}],Statements:[{name:"Rip Current Statement",color:"#4DD0E1"},{name:"Beach Hazards Statement",color:"#4DD0E1"},{name:"Coastal Flood Statement",color:"#B0BEC5"}],Outlooks:[{name:"Hydrologic Outlook",color:"#81C784"}]});
+addRows('Wind/Air',{Warnings:[{name:"Extreme Wind Warning",color:"#FF9800"},{name:"Hurricane Force Wind Warning",color:"#CD6155"},{name:"Dust Storm Warning",color:"#FFE4B5"},{name:"Blowing Dust Warning",color:"#FFE4B5"},{name:"High Wind Warning",color:"#D4AC0D"}],Watches:[{name:"Hurricane Force Wind Watch",color:"#9C27B0"},{name:"High Wind Watch",color:"#B7950B"}],Advisories:[{name:"Dense Fog Advisory",color:"#5D6D7E"},{name:"Dense Fog (marine) Advisory",color:"#5D6D7E"},{name:"Dense Smoke Advisory",color:"#F7DC6F"},{name:"Dust Advisory",color:"#A9A67D"},{name:"Blowing Dust Advisory",color:"#A9A67D"},{name:"Lake Wind Advisory",color:"#D2B48C"},{name:"Wind Advisory",color:"#D2B48C"},{name:"Freezing Fog Advisory",color:"#008080"},{name:"Air Stagnation Advisory",color:"#808080"}],Statements:[{name:"Air Quality Alert",color:"#808080"}]});
+addRows('Fire/Heat',{Warnings:[{name:"Fire Warning",color:"#8D4F2A"},{name:"Extreme Heat Warning",color:"#C2185B"},{name:"Red Flag Warning",color:"#E91E63"}],Watches:[{name:"Extreme Heat Watch",color:"#8B0000"},{name:"Fire Weather Watch",color:"#FFE0B2"}],Advisories:[{name:"Heat Advisory",color:"#FF8A65"}]});
+addRows('Tropical',{Warnings:[{name:"Storm Surge Warning",color:"#9C27B0"},{name:"Hurricane Warning",color:"#D32F2F"},{name:"Typhoon Warning",color:"#D32F2F"},{name:"Tropical Storm Warning",color:"#8B0000"}],Watches:[{name:"Storm Surge Watch",color:"#BA68C8"},{name:"Hurricane Watch",color:"#E91E63"},{name:"Typhoon Watch",color:"#E91E63"},{name:"Tropical Storm Watch",color:"#EF9A9A"}]});
+addRows('Marine',{Warnings:[{name:"Heavy Freezing Spray Warning",color:"#00BFFF"},{name:"Storm Warning",color:"#8E24AA"},{name:"Gale Warning",color:"#CE93D8"},{name:"Hazardous Seas Warning",color:"#B39DDB"}],Watches:[{name:"Storm Watch",color:"#FFECB3"},{name:"Gale Watch",color:"#F8BBD0"},{name:"Hazardous Seas Watch",color:"#4527A0"},{name:"Heavy Freezing Spray Watch",color:"#BC8F8F"}],Advisories:[{name:"Small Craft Advisory",color:"#D1C5E8"},{name:"Brisk Wind Advisory",color:"#D1C5E8"},{name:"Freezing Spray Advisory",color:"#00BFFF"},{name:"Low Water Advisory",color:"#8B0000"}]});
+addRows('Other',{Warnings:[{name:"Shelter In Place Warning",color:"#FF8A65"},{name:"Evacuation Immediate",color:"#7CFC00"},{name:"Civil Danger Warning",color:"#FFB6C1"},{name:"Civil Emergency Message",color:"#FFB6C1"},{name:"Law Enforcement Warning",color:"#BDBDBD"},{name:"Local Area Emergency",color:"#BDBDBD"}],Statements:[{name:"911 Telephone Outage",color:"#BDBDBD"}],Outlooks:[{name:"Hazardous Weather Outlook",color:"#FFF9C4"}],Forecasts:[{name:"Short Term Forecast",color:"#81C784"}]});
+html+='<button class="reset-btn" onclick="resetAllToggles()">Reset All Toggles</button>';
+html+='</div><div class="grid" id="warn-grid" style="margin-top:12px">';
+list.slice(0,120).forEach((f,i)=>{
+const p=f.properties;
+const ev=p.event||'Warning';
+const color=getTugaColor(ev);
+const searchBlob=((ev||'')+' '+(p.areaDesc||'')+' '+(p.headline||'')).toLowerCase();
+html+=`<div class="card warn-card" data-search="${searchBlob}" data-event="${ev.toLowerCase()}"><strong style="color:#FFD700;font-size:12px">${ev}</strong><div class="city">${p.areaDesc||''}</div><div style="font-size:10px;color:#ccc;margin-top:4px;max-height:36px;overflow:hidden">${p.headline||''}</div>
+<div id="mini-map-${i}" class="mini-map"></div>
+<div style="display:flex;align-items:center;gap:6px;margin-top:4px"><div class="dot" style="background:${color};width:14px;height:14px"></div><span style="font-size:10px;color:${color}">${ev} polygon = ${color}</span></div>
+<div class="enlarge-btn" onclick="openWarning(${i})">TAP TO ENLARGE — POLYGON ON RADAR + STREETS + MESSAGE</div><button class="share-btn" onclick="shareWarning(${i})">📤 SHARE WARNING</button></div>`;
+if((i+1)%4===0) html+=`<div class="ad-inline"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8107327731283027" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({});<\/script></div>`;
+});
+html+='</div>';panel.innerHTML=html;
+miniMapsInitialized=false;
+}
+function toggleEvent(el){
+el.classList.toggle('on');
+const name=el.getAttribute('data-name');
+const on=el.classList.contains('on');
+document.querySelectorAll('.warn-card').forEach(c=>{
+const ev=c.getAttribute('data-event')||'';
+if(ev.includes(name)){
+c.style.display=on?'':'none';
+}
+});
+}
+function resetAllToggles(){
+document.querySelectorAll('.switch').forEach(s=>s.classList.add('on'));
+document.querySelectorAll('.warn-card').forEach(c=>c.style.display='');
+}
+async function initMiniMaps(list){
+if(miniMapsInitialized) return;
+miniMapsInitialized=true;
+for(let i=0;i<Math.min(list.length,120);i++){
+const f=list[i];
+const p=f.properties;
+const ev=p.event||'';
+const color=getTugaColor(ev);
+const geom=await getGeomWithZones(f);
+const mapId=`mini-map-${i}`;
+const el=document.getElementById(mapId);
+if(!el) continue;
+try{
+const m=L.map(mapId,{zoomControl:true,attributionControl:false}).setView([39,-98],4);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OSM'}).addTo(m);
+L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0r-900913/{z}/{x}/{y}.png',{opacity:0.6,maxZoom:18}).addTo(m);
+let has=false;
+if(geom && geom.coordinates){
+if(geom.type==='Polygon'){
+const latlngs=geom.coordinates[0].map(c=>[c[1],c[0]]);
+const poly=L.polygon(latlngs,{color:color,weight:4,fillColor:color,fillOpacity:0.35}).addTo(m);
+m.fitBounds(poly.getBounds(),{padding:[10,10]});
+has=true;
+}else if(geom.type==='MultiPolygon'){
+let b=null;
+geom.coordinates.forEach(pc=>{
+const ring=pc[0].map(c=>[c[1],c[0]]);
+const poly=L.polygon(ring,{color:color,weight:4,fillColor:color,fillOpacity:0.35}).addTo(m);
+if(!b) b=poly.getBounds(); else b.extend(poly.getBounds());
+});
+if(b){m.fitBounds(b,{padding:[10,10]});has=true;}
+}
+}
+if(!has){m.setView([39.5,-98.35],4);}
+setTimeout(()=>{try{m.invalidateSize();}catch(e){}},600);
+miniMaps[mapId]=m;
+}catch(e){}
+}
+}
+async function getGeomWithZones(feature){
+if(feature.geometry && feature.geometry.coordinates) return feature.geometry;
+const zones=feature.properties && feature.properties.affectedZones;
+if(!zones || zones.length===0) return null;
+for(let z=0;z<Math.min(zones.length,5);z++){
+try{
+const r=await fetch(zones[z]);
+const j=await r.json();
+if(j.geometry && j.geometry.coordinates) return j.geometry;
+if(j.features && j.features[0] && j.features[0].geometry) return j.features[0].geometry;
+}catch(e){continue;}
+}
+return null;
+}
+function filterCat(cat){
+document.querySelectorAll('[data-cat]').forEach(r=>{
+if(r.id==='whitePanel' || r.id==='warn-grid') return;
+const c=r.getAttribute('data-cat');
+if(cat==='All') r.style.display='';
+else r.style.display=c===cat?'':'none';
+});
+}
+function openRadar(id){
+document.getElementById('modal-map').style.display='none';
+document.getElementById('modal-img').style.display='block';
+document.getElementById('modal-img').src='https://radar.weather.gov/ridge/standard/'+id+'_loop.gif';
+document.getElementById('modal-title').innerText=id+' — '+(RADAR_STATES[id]||id)+' — FULL LIVE LOOP — Rain Moving';
+document.getElementById('modal-desc').innerText='Live NWS loop — '+id+' — Streets and cities visible in map layer';
+document.getElementById('modal').classList.add('show');
+}
+async function openWarning(i){
+const f=allAlerts[i];if(!f) return;const p=f.properties;
+const ev=p.event||'';
+const color=getTugaColor(ev);
+const geom=await getGeomWithZones(f);
+document.getElementById('modal-map').style.display='block';
+document.getElementById('modal-img').style.display='none';
+document.getElementById('modal-title').innerText=ev+' — '+(p.areaDesc||'')+' — LIVE RADAR + '+ev+' POLYGON + STREETS';
+document.getElementById('modal-desc').innerText=(p.headline||'')+'\n\n'+(p.description||'')+'\n\n'+(p.instruction||'')+'\n\nISSUED: '+p.sent+'\nEXPIRES: '+p.expires+'\n\nMAP: Polygon color = '+color+' = Tuga color for '+ev+'. Background = OpenStreetMap with highways/streets/cities/states. Overlay = live NEXRAD rain moving.';
+document.getElementById('modal').classList.add('show');
+setTimeout(()=>{initLeafletMap(geom,color);},250);
+}
+function initLeafletMap(geom,color){
+if(leafletMap){leafletMap.remove();leafletMap=null;}
+leafletMap=L.map('modal-map',{zoomControl:true}).setView([39,-98],5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OSM'}).addTo(leafletMap);
+L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0r-900913/{z}/{x}/{y}.png',{opacity:0.65,maxZoom:18}).addTo(leafletMap);
+let has=false;
+if(geom && geom.coordinates){
+try{
+if(geom.type==='Polygon'){
+const latlngs=geom.coordinates[0].map(c=>[c[1],c[0]]);
+const poly=L.polygon(latlngs,{color:color,weight:5,fillColor:color,fillOpacity:0.3}).addTo(leafletMap);
+leafletMap.fitBounds(poly.getBounds(),{padding:[20,20]});
+has=true;
+}else if(geom.type==='MultiPolygon'){
+let b=null;
+geom.coordinates.forEach(pc=>{
+const ring=pc[0].map(c=>[c[1],c[0]]);
+const poly=L.polygon(ring,{color:color,weight:5,fillColor:color,fillOpacity:0.3}).addTo(leafletMap);
+if(!b) b=poly.getBounds(); else b.extend(poly.getBounds());
+});
+if(b){leafletMap.fitBounds(b,{padding:[20,20]});has=true;}
+}
+}catch(e){}
+}
+if(!has){leafletMap.setView([39.5,-98.35],5);}
+setTimeout(()=>{if(leafletMap) leafletMap.invalidateSize();},300);
+}
+function closeModal(){document.getElementById('modal').classList.remove('show');if(leafletMap){leafletMap.remove();leafletMap=null;}}
+function shareRadar(id){window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(SHARE_SITE+'?radar='+id),'_blank');}
+function shareWarning(i){const p=allAlerts[i].properties;window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(SHARE_SITE+'?warn='+p.id),'_blank');}
+function showTab(which){
+document.getElementById('tab-radars').classList.toggle('active',which==='radars');
+document.getElementById('tab-warnings').classList.toggle('active',which==='warnings');
+document.getElementById('radar-grid').style.display=which==='radars'?'grid':'none';
+document.getElementById('warnings-panel').style.display=which==='warnings'?'block':'none';
+if(which==='warnings' &&!miniMapsInitialized){
+setTimeout(()=>{initMiniMaps(allAlerts);},400);
+}else{
+setTimeout(()=>{Object.values(miniMaps).forEach(m=>{try{m.invalidateSize();}catch(e){}}); if(leafletMap){try{leafletMap.invalidateSize();}catch(e){}}},500);
+}
+}
+const inp=document.getElementById('search');
+inp.addEventListener('input',()=>{
+let q=inp.value.toLowerCase().trim();
+if(q===''){
+document.querySelectorAll('#radar-grid.card').forEach(c=>c.style.display='');
+document.querySelectorAll('.warn-card').forEach(c=>c.style.display='');
+document.querySelectorAll('.ad-inline').forEach(a=>a.style.display='');
+updateCounts();return;
+}
+let qAbbrev=FULL_STATE_MAP[q]||'';
+let qFull='';Object.keys(FULL_STATE_MAP).forEach(full=>{if(FULL_STATE_MAP[full]===q) qFull=full;});
+let vis=0;
+document.querySelectorAll('#radar-grid.card').forEach(c=>{
+const s=c.getAttribute('data-search')||'';
+const tokens=s.toLowerCase().split(/[^a-z0-9]+/);
+let show=tokens.includes(q);
+if(qAbbrev && tokens.includes(qAbbrev)) show=true;
+if(qFull && tokens.includes(qFull)) show=true;
+if(!show && q.length>2 && Object.keys(FULL_STATE_MAP).includes(q) && s.toLowerCase().includes(q)) show=true;
+if(!show && s.toLowerCase().includes(q)) show=true;
+c.style.display=show?'':'none';if(show) vis++;
+});
+document.getElementById('radar-count').innerText=vis;
+document.querySelectorAll('.warn-card').forEach(c=>{
+const s=c.getAttribute('data-search')||'';
+const tokens=s.toLowerCase().split(/[^a-z0-9]+/);
+let show=tokens.includes(q) || s.toLowerCase().includes(q);
+if(qAbbrev && tokens.includes(qAbbrev)) show=true;
+if(qFull && tokens.includes(qFull)) show=true;
+if(!show && s.toLowerCase().includes(q)) show=true;
+c.style.display=show?'':'none';
+});
+document.querySelectorAll('.ad-inline').forEach(a=>a.style.display='none');
+});
+window.addEventListener('DOMContentLoaded',buildRadarGrid);
+</script></body></html>
